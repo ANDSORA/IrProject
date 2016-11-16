@@ -3,4 +3,5 @@
   */
 object hello extends App {
   println("Hello, IrProject.")
+  println("Yes, and here is Li")
 }
