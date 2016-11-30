@@ -2,14 +2,16 @@ package Preprocessing
 
 import ch.ethz.dal.tinyir.processing.Document
 
+import scala.collection.mutable.HashSet
 import scala.collection.mutable.HashMap
+import scala.collection.mutable.{Map => MutMap}
 
 /**
   * Created by andsora on 11/29/16.
   */
 class MyDocStream (docs: Stream[Document]) {
-  //lazy val Name2ID: Map[String, Int] = docs.map(a => a.name).zipWithIndex.toMap
-  //lazy val ID2Name: Map[Int, String] = Name2ID.map(_.swap)
+  lazy val Name2ID: Map[String, Int] = docs.map(a => a.name).zipWithIndex.toMap
+  lazy val ID2Name: Map[Int, String] = Name2ID.map(_.swap)
 
   private var ID: Int = 0
   /*
@@ -20,16 +22,19 @@ class MyDocStream (docs: Stream[Document]) {
     }
     buffer.toStream
   }*/
-  val stream: Stream[Document] = docs.map(a => new MyDocument({ID += 1; ID}, a.name, a.content))
+  lazy val stream: Stream[Document] = docs.map(a => new MyDocument({ID += 1; ID}, a.name, a.content))
 
-  val tokenMap: HashMap[String, Int] = {
-    val mm = HashMap[String, Int]()
+
+  /*
+  val tokenMap: Map[String, Int] = {
+    val mm = HashSet[String]()
     var id = 0
     for (doc <- stream) {
       for (token <- doc.tokens) {
-        if (!mm.contains(token)) mm += token -> {id += 1; id}
+        if (!mm.contains(token)) mm += token
       }
     }
-    mm
+    mm.toList.zipWithIndex.toMap
   }
+  */
 }

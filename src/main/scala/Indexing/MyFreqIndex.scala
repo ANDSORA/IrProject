@@ -1,11 +1,7 @@
-package Preprocessing
+package Indexing
 
+import ch.ethz.dal.tinyir.indexing.{InvertedIndex, Result}
 import ch.ethz.dal.tinyir.processing.Document
-import ch.ethz.dal.tinyir.indexing.Result
-import ch.ethz.dal.tinyir.indexing.InvertedIndex
-import ch.ethz.dal.tinyir.compression.IntegerCompression
-
-import scala.collection.mutable.ListBuffer
 
 /**
   * Created by andsora on 11/29/16.
