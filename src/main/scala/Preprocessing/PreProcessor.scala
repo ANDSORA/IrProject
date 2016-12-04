@@ -25,8 +25,10 @@ import java.io._
 object PreProcessor {
   def tokenWasher(content: String): List[String] = tokenWasher(Tokenizer.tokenize(content))
   def tokenWasher(tokens: List[String]): List[String] = {
-    StopWords.filterOutSW(tokens.map(a => PorterStemmer.stem(a)))
-              .filter(s => s.map(c => c.isLetter).reduce(_ && _)).toList
+//    StopWords.filterOutSW(tokens.map(a => PorterStemmer.stem(a)))
+//              .filter(s => s.map(c => c.isLetter).reduce(_ && _)).toList
+    StopWords.filterOutSW(tokens)
+      .filter(s => s.map(c => c.isLetter).reduce(_ && _)).toList
   }
 
   def getTokenMap(docs: Stream[Document], TokenMap: HashMap[String, Int]): Unit = {
