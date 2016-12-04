@@ -5,8 +5,8 @@ import ch.ethz.dal.tinyir.indexing.FreqIndex
 import ch.ethz.dal.tinyir.io.TipsterStream
 import ch.ethz.dal.tinyir.util.StopWatch
 import ch.ethz.dal.tinyir.compression.IntegerCompression
-
 import Preprocessing.{MyDocStream, PreProcessor}
+import io.MyTipsterStream
 
 import scala.io.StdIn.readLine
 import scala.util.control.Breaks.break
@@ -66,7 +66,7 @@ object hello extends App {
   val runtime = Runtime.getRuntime
 
   // get the file stream and add ID, wash tokens
-  val tips = new MyDocStream(new TipsterStream("data/raw").stream)
+  val tips = new MyDocStream(new MyTipsterStream("data/raw").stream.take(10))
   state.PrintAll()
   println("\nFiles loaded.\n")
 
