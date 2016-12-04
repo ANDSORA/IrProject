@@ -1,4 +1,4 @@
-package silenthinker.ir.util
+package utility
 
 /**
   * Created by Junlin on 11/30/16.

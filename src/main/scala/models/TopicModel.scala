@@ -1,8 +1,9 @@
-package silenthinker.ir.models
+package models
+
+import math.ProbVector
 
 import collection.mutable.{HashMap => MutHashMap}
-import silenthinker.ir.math.ProbVector
-import silenthinker.ir.util.StopWatch
+import utility.StopWatch
 
 /** Implement Simple Topic Model
   *

@@ -1,4 +1,5 @@
-package silenthinker.ir.util
+package utility
+
 import scala.collection.mutable.ArrayBuffer
 
 class StopWatch {

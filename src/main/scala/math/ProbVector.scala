@@ -1,7 +1,8 @@
 /**
   * Created by Junlin on 11/29/16.
   */
-package silenthinker.ir.math
+package math
+
 import scala.util.Random
 
 case class ProbVector (val arr: Array[Double]) extends AnyVal {

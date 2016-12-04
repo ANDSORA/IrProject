@@ -1,6 +1,6 @@
-package silenthinker.ir.models
+package models
 
-import silenthinker.ir.util.{StopWatch, WordProber}
+import utility.WordProber
 
 /**
   * Created by Junlin on 11/30/16.
