@@ -15,7 +15,7 @@ class MyTipsterStream(path: String, ext: String = "")
 
 object MyTipsterStream  {
   def main(args: Array[String]) {
-    val tipster = new MyTipsterStream("/Users/Junlin/Documents/ETH/Information retrieval/Projects/Project_2/data/raw")
+    val tipster = new MyTipsterStream("data/raw")
     println("Number of files in zips = " + tipster.length)
     val doc = tipster.stream.head
     println(doc.name + ", " + doc.title + ", " + doc.tokens)

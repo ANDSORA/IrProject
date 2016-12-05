@@ -22,6 +22,10 @@ class MyDocument (id: Int, nam: String, txt: String, head: String = "") extends 
   override def ID = id
   override def tokens = PreProcessor.tokenWasher(txt)
 
+  /** toString method
+    *
+    * @return
+    */
   override def toString(): String = {
     "**********" + "\n" +
     "ID: " + ID + ", Name: " + name + "\n" +

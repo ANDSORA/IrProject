@@ -1,6 +1,7 @@
 package models
 
-import Preprocessing.MyDocument
+import Preprocessing.{MyDocument, Query}
+import postprocessing.Postprocessor
 import utility.WordProber
 
 /**
@@ -9,20 +10,24 @@ import utility.WordProber
   * Class that implements pointwise ranking algorithm
   */
 
-case class PointwiseRanker(val q: List[String]) {
+case class PointwiseRanker(val q: Query) {
   /**
     * Compute the query probability: P(q|d) = product of P(w|d) where w belongs to query q
    */
   def queryScore(wordProb: (String, MyDocument) => Double)(doc: MyDocument):Double = {
-    q.map(wordProb(_, doc)).product
+    q.content.map(wordProb(_, doc)).product
   }
 
-  /**
-    * Rank documents according to query likelihood
+  /** Rank documents according to query likelihood
+    *
+    * @param wordProb
+    * @param docs
+    * @return
     */
   def rankDocs(wordProb: (String, MyDocument) => Double)(docs: Stream[MyDocument]) = {
     docs.map(doc => (doc.name, queryScore(wordProb)(doc))).sortWith(_._2 > _._2)
   }
+
 }
 
 object PointwiseRanker extends App {
@@ -32,12 +37,13 @@ object PointwiseRanker extends App {
   val doc0       = new MyDocument(0, "doc_0", "usa france airbus")
   val doc1       = new MyDocument(1, "doc_1", "eth computer science")
   val doc2       = new MyDocument(2, "doc_2", "airbus eth france science")
-  val stream     = Stream(doc0, doc1, doc2)
+  val doc3       = new MyDocument(3, "doc_3", "usa computer airbus airbus france usa france airbus")
+  val stream     = Stream(doc0, doc1, doc2, doc3)
   val model      = new TopicModel(vocabulary, stream, ntopics)
 
   model.learn(50)
-  val query = List("airbus", "usa", "france")
+  val query = Query(0, List("airbus", "usa"))
   val ranker = new PointwiseRanker(query)
-  println(ranker.rankDocs(WordProber.jmSmoothedWordProb(WordProber.naiveWordProb, model.wordProb, 0.2))(stream).toList)
-
+  val ranking = ranker.rankDocs(WordProber.jmSmoothedWordProb(WordProber.naiveWordProb, model.wordProb, 0.1))(stream).toList
+  println(Postprocessor.outputRanking(query, ranking))
 }

@@ -24,6 +24,14 @@ import java.io._
 
 object PreProcessor {
   def tokenWasher(content: String): List[String] = tokenWasher(Tokenizer.tokenize(content))
+
+
+  /** Method to filter out stop words, non-alphabetical words from
+    * already tokenized words
+    *
+    * @param tokens
+    * @return
+    */
   def tokenWasher(tokens: List[String]): List[String] = {
 //    StopWords.filterOutSW(tokens.map(a => PorterStemmer.stem(a)))
 //              .filter(s => s.map(c => c.isLetter).reduce(_ && _)).toList
@@ -31,6 +39,12 @@ object PreProcessor {
       .filter(s => s.map(c => c.isLetter).reduce(_ && _)).toList
   }
 
+  /** Create dictionary
+    *
+    * @param docs
+    * @param TokenMap
+    */
+  // TODO: optimize code
   def getTokenMap(docs: Stream[Document], TokenMap: HashMap[String, Int]): Unit = {
     var ID = 0
     var times = 0
