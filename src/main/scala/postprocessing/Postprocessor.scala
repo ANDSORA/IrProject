@@ -1,6 +1,7 @@
 package postprocessing
 
 import Preprocessing.Query
+import breeze.linalg.min
 import math.ProbVector
 
 /** Evaluate ranking, output results
@@ -16,7 +17,7 @@ object Postprocessor {
     ranking.zipWithIndex.map{ case ((doc_id, score), rank) => (q.id, rank, doc_id)}
   }
 
-  /** Average precision
+  /** Average precision (bounded)
     *
     * @param retriev: List of document id
     * @param relev: List of ground truth document id
@@ -39,7 +40,7 @@ object Postprocessor {
       precAt(iter-1) = numberRelevAt / iter
       iter += 1
     }
-    (precAt*rel).arr.sum / relevanceSize
+    (precAt*rel).arr.sum / min(relevanceSize, retrievSize)
   }
 
   def main(args: Array[String]): Unit = {

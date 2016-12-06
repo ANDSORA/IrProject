@@ -3,10 +3,11 @@
   */
 import ch.ethz.dal.tinyir.indexing.FreqIndex
 import ch.ethz.dal.tinyir.io.TipsterStream
-import ch.ethz.dal.tinyir.util.StopWatch
 import ch.ethz.dal.tinyir.compression.IntegerCompression
 import Preprocessing.{MyDocStream, PreProcessor}
+import ch.ethz.dal.tinyir.util.StopWatch
 import io.MyTipsterStream
+import utility.Stater
 
 import scala.io.StdIn.readLine
 import scala.util.control.Breaks.break
@@ -17,30 +18,7 @@ import scala.collection.mutable.BitSet
 import scala.collection.mutable.ArrayBuffer
 
 
-class Stater(val sw: StopWatch, val runtime: Runtime) {
-  def start(): Unit = {
-    sw.start
-  }
 
-  def PrintMeM(): Unit = {
-    val mb = 1024 * 1024
-    println("** Used Memory:  " + (runtime.totalMemory - runtime.freeMemory) / mb)
-    println("** Free Memory:  " + runtime.freeMemory / mb)
-    println("** Total Memory: " + runtime.totalMemory / mb)
-    println("** Max Memory:   " + runtime.maxMemory / mb)
-  }
-
-  def PrintTime(): Unit = {
-    println("** TIME:         " + sw.uptonow)
-  }
-
-  def PrintAll(): Unit = {
-    println()
-    PrintTime()
-    println()
-    PrintMeM()
-  }
-}
 
 /*
 class MyThread extends Runnable {
@@ -49,7 +27,7 @@ class MyThread extends Runnable {
     val runtime = Runtime.getRuntime
     while (true) {
       Thread.sleep(1000)
-      Stater.PrintMeM(runtime)
+      utility.Stater.PrintMeM(runtime)
     }
   }
 }

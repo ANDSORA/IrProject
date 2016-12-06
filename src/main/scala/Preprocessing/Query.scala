@@ -7,9 +7,10 @@ package Preprocessing
 /** Query class that contains topic id and (tokenized) content
   *
   * @param id
-  * @param content
+  * @param content: list of strings that are already tokenized, token-washed!
   */
 case class Query(val id: Int, val content: List[String]) {
+
   /** toString method
     *
     * @return
