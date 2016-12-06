@@ -4,8 +4,10 @@
 import ch.ethz.dal.tinyir.indexing.FreqIndex
 import ch.ethz.dal.tinyir.io.TipsterStream
 import ch.ethz.dal.tinyir.compression.IntegerCompression
+
 import Preprocessing.{MyDocStream, PreProcessor}
 import ch.ethz.dal.tinyir.util.StopWatch
+import utility.Stater
 import io.MyTipsterStream
 import utility.Stater
 
@@ -13,12 +15,9 @@ import scala.io.StdIn.readLine
 import scala.util.control.Breaks.break
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.HashSet
-import scala.collection.mutable.HashMap
+import scala.collection.mutable.{HashMap => HMap}
 import scala.collection.mutable.BitSet
 import scala.collection.mutable.ArrayBuffer
-
-
-
 
 /*
 class MyThread extends Runnable {
@@ -49,14 +48,13 @@ object hello extends App {
   println("\nFiles loaded.\n")
 
   // construct the TokenMap
-  val TokenMap = HashMap[String, Int]()
-  PreProcessor.getTokenMap(tips.stream, TokenMap)
+  val TokenMap = PreProcessor.getTokenMap(tips.stream.toIterator, 10)
   state.PrintAll()
   println("\nTokenMap constructed.\n")
 
   // construct the Sample for training Model
-  val Sample = ListBuffer[(HashMap[Int, Double], Int)]()
-  PreProcessor.getSample(tips.stream, TokenMap, Sample)
+  val Sample = ListBuffer[(HMap[Int, Double], Int)]()
+  //PreProcessor.getSample(tips.stream.toIterator, TokenMap, Sample)
   Sample.toList
   state.PrintAll()
   println("\nSample constructed.\n")

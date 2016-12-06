@@ -1,11 +1,8 @@
 package utility
 
-import ch.ethz.dal.tinyir.util
+import ch.ethz.dal.tinyir.util.StopWatch
 
-/**
-  * Created by Junlin on 12/5/16.
-  */
-class Stater(val sw: util.StopWatch, val runtime: Runtime) {
+class Stater(val sw: StopWatch, val runtime: Runtime) {
   val mb = 1024 * 1024
 
   def start(): Unit = {
@@ -15,6 +12,7 @@ class Stater(val sw: util.StopWatch, val runtime: Runtime) {
   def freeMeM() = runtime.freeMemory / mb
 
   def PrintMeM(): Unit = {
+    val mb = 1024 * 1024
     println("** Used Memory:  " + (runtime.totalMemory - runtime.freeMemory) / mb)
     println("** Free Memory:  " + runtime.freeMemory / mb)
     println("** Total Memory: " + runtime.totalMemory / mb)
@@ -31,4 +29,5 @@ class Stater(val sw: util.StopWatch, val runtime: Runtime) {
     println()
     PrintMeM()
   }
+
 }
