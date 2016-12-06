@@ -4,21 +4,11 @@ import ch.ethz.dal.tinyir.processing.Document
 import ch.ethz.dal.tinyir.processing.Tokenizer
 import ch.ethz.dal.tinyir.processing.StopWords
 import ch.ethz.dal.tinyir.lectures.TermFrequencies
-import ch.ethz.dal.tinyir.io.TipsterStream
-import com.github.aztek.porterstemmer.PorterStemmer
 
-import scala.collection.mutable.HashSet
-import scala.collection.mutable.{HashMap => HMap}
-import scala.collection.mutable.ListBuffer
-import scala.collection.mutable.{Map => MutMap}
+import scala.collection.mutable.{HashMap => HMap, ListBuffer, Map => MutMap}
 
-import utility.Stater
-import utility.StopWatch
-/*
-import org.iq80.leveldb._
-import org.iq80.leveldb.impl.Iq80DBFactory._
-import java.io._
-*/
+import utility.{Stater, StopWatch}
+import io.MyTipsterStream
 
 /**
   * Created by andsora on 11/27/16.
@@ -27,14 +17,6 @@ import java.io._
 
 object PreProcessor {
   def tokenWasher(content: String): List[String] = tokenWasher(Tokenizer.tokenize(content))
-
-
-  /** Method to filter out stop words, non-alphabetical words from
-    * already tokenized words
-    *
-    * @param tokens
-    * @return
-    */
   def tokenWasher(tokens: List[String]): List[String] = {
     StopWords.filterOutSW(tokens)
               .filter(s => s.map(c => c.isLetter).reduce(_ && _)).toList
@@ -49,7 +31,7 @@ object PreProcessor {
       if ({times += 1; times} % 100 == 0) {
         println("(getTokenMap) proccessed files: " + times)
       }
-      for (s <- tokenWasher(doc.tokens)) {
+      for (s <- tokenWasher(doc.tokens) ++ tokenWasher(doc.title)) {
         if (!mm.contains(s)) mm += s -> 1
         else mm(s) += 1
       }
@@ -60,27 +42,53 @@ object PreProcessor {
     MM
   }
 
-  def getPostings(it: Iterator[Document], TokenMap: HMap[String, (Int, Int)], ST: Stater):
-    HMap[Int, ListBuffer[Int]] = {
+  def getPostingsAndDocs(it: Iterator[Document], TokenMap: HMap[String, (Int, Int)],
+                         postings: HMap[Int, ListBuffer[Int]], docs: HMap[Int, Document], ST: Stater): Unit = {
     var docID = 0
     var times = 0
-    val mm = HMap[Int, ListBuffer[Int]]()
     for (doc <- it) {
+      // print the memory usage and time
       if ({times += 1; times} % 100 == 0) {
         println("(getPostings) proccessed files: " + times)
         if (times % 1000 == 0) {
-          println("The size: " + mm.size)
+          println("The size: " + postings.size)
           ST.PrintAll()
         }
       }
+
+      // docID ++
       docID += 1
-      for (token <- doc.tokens) {
-        if (TokenMap.contains(token)) {
-          val termID = TokenMap(token)._1
-          if (!mm.contains(termID)) mm += termID -> ListBuffer(docID)
-          else if (mm(termID).last != docID) mm(termID) += docID
-        }
+
+      // fill docs
+      val prunedTokens = doc.tokens.filter(token => TokenMap.contains(token))
+      docs += docID -> new FeatureDocument(doc.ID, doc.name, tf(prunedTokens, TokenMap), doc.title)
+
+      // fill postings
+      for (token <- prunedTokens ++ tokenWasher(doc.title).filter(token => TokenMap.contains(token))) {
+        val termID = TokenMap(token)._1
+        if (!postings.contains(termID)) postings += termID -> ListBuffer(docID)
+        else if (postings(termID).last != docID) postings(termID) += docID
       }
+    }
+  }
+
+  def getDocs(it: Iterator[Document], docs: HMap[Int, Document]): Unit = {
+    var docID = 0
+    var times = 0
+    for (doc <- it) {
+      if ({times += 1; times} % 100 == 0) {
+        println("(getDocs) proccessed files: " + times)
+      }
+      docs += {docID += 1; docID} -> doc
+    }
+  }
+
+  def tf(tokens: List[String], TokenMap: HMap[String, (Int, Int)]): HMap[Int, Int] = {
+    val mm = HMap[Int, Int]()
+    for (token <- tokens) {
+      val termID = TokenMap(token)._1
+      if (!mm.contains(termID)) mm += termID -> 1
+      else mm(termID) += 1
     }
     mm
   }
@@ -105,13 +113,6 @@ object PreProcessor {
       sample += Tuple2(hashMapConvertor(tf, TokenMap), {ID += 1; ID})
     }
   }
-  */
-
-  /*
-  def UnionOfOrdered(L1: List[Int], L2: List[Int]): List[Int] = {
-
-  }
-  */
 
   def MergeMap(Ma: Map[Int, List[Int]], Mb: Map[Int, List[Int]]): Map[Int, List[Int]] = {
     val mm = MutMap[Int, List[Int]]()
@@ -122,6 +123,7 @@ object PreProcessor {
     }
     mm.toMap
   }
+  */
 
   def main(args: Array[String]): Unit = {
     /*
@@ -133,7 +135,8 @@ object PreProcessor {
     val ST = new Stater(new StopWatch, Runtime.getRuntime)
     ST.start()
 
-    val tips = new TipsterStream("data/raw")
+    val tips = new MyTipsterStream("data/raw")
+
     val It_1 = tips.stream.toIterator
     val TokenMap = getTokenMap(It_1, 10)
     println("The size of Map = " + TokenMap.size)
@@ -141,8 +144,12 @@ object PreProcessor {
     //println(TokenMap.filter(aa => aa._2._2 == 15))
 
     val It_2 = tips.stream.toIterator
-    val postings = getPostings(It_2, TokenMap, ST)
+    val postings = HMap[Int, ListBuffer[Int]]()
+    val docs = HMap[Int, Document]()
+    getPostingsAndDocs(It_2, TokenMap, postings, docs, ST)
+    //getDocs(It_2, docs)
     println(postings.take(100))
+    println(docs.take(10))
     ST.PrintAll()
   }
 }
