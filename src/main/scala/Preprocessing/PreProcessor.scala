@@ -1,11 +1,10 @@
 package Preprocessing
 
 import ch.ethz.dal.tinyir.processing.Document
-import ch.ethz.dal.tinyir.processing.StopWords
 import ch.ethz.dal.tinyir.processing.Tokenizer
+import ch.ethz.dal.tinyir.processing.StopWords
 import ch.ethz.dal.tinyir.lectures.TermFrequencies
 import ch.ethz.dal.tinyir.io.TipsterStream
-import ch.ethz.dal.tinyir.util.StopWatch
 import com.github.aztek.porterstemmer.PorterStemmer
 
 import scala.collection.mutable.HashSet
@@ -13,6 +12,8 @@ import scala.collection.mutable.{HashMap => HMap}
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.{Map => MutMap}
 
+import utility.Stater
+import utility.StopWatch
 /*
 import org.iq80.leveldb._
 import org.iq80.leveldb.impl.Iq80DBFactory._
@@ -23,33 +24,17 @@ import java.io._
   * Created by andsora on 11/27/16.
   */
 
-class Stater(val sw: StopWatch, val runtime: Runtime) {
-  def start(): Unit = {
-    sw.start
-  }
-
-  def PrintMeM(): Unit = {
-    val mb = 1024 * 1024
-    println("** Used Memory:  " + (runtime.totalMemory - runtime.freeMemory) / mb)
-    println("** Free Memory:  " + runtime.freeMemory / mb)
-    println("** Total Memory: " + runtime.totalMemory / mb)
-    println("** Max Memory:   " + runtime.maxMemory / mb)
-  }
-
-  def PrintTime(): Unit = {
-    println("** TIME:         " + sw.uptonow)
-  }
-
-  def PrintAll(): Unit = {
-    println()
-    PrintTime()
-    println()
-    PrintMeM()
-  }
-}
 
 object PreProcessor {
   def tokenWasher(content: String): List[String] = tokenWasher(Tokenizer.tokenize(content))
+
+
+  /** Method to filter out stop words, non-alphabetical words from
+    * already tokenized words
+    *
+    * @param tokens
+    * @return
+    */
   def tokenWasher(tokens: List[String]): List[String] = {
     StopWords.filterOutSW(tokens)
               .filter(s => s.map(c => c.isLetter).reduce(_ && _)).toList

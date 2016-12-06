@@ -22,7 +22,7 @@ class MyDocStream (docs: Stream[Document]) {
     }
     buffer.toStream
   }*/
-  lazy val stream: Stream[Document] = docs.map(a => new MyDocument({ID += 1; ID}, a.name, a.content))
+  lazy val stream: Stream[Document] = docs.map(a => new MyDocument({ID += 1; ID}, a.name, a.content, a.title))
 
 
   /*
