@@ -3,12 +3,14 @@ package Preprocessing
 import ch.ethz.dal.tinyir.processing.Document
 import ch.ethz.dal.tinyir.processing.Tokenizer
 import ch.ethz.dal.tinyir.processing.StopWords
+import ch.ethz.dal.tinyir.util.StopWatch
 import ch.ethz.dal.tinyir.lectures.TermFrequencies
 
 import scala.collection.mutable.{HashMap => HMap, ListBuffer, Map => MutMap}
 
-import utility.{Stater, StopWatch}
+import utility.Stater
 import io.MyTipsterStream
+
 
 /**
   * Created by andsora on 11/27/16.
@@ -152,4 +154,5 @@ object PreProcessor {
     println(docs.take(10))
     ST.PrintAll()
   }
+
 }

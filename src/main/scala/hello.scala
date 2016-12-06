@@ -9,7 +9,7 @@ class MyThread extends Runnable {
     val runtime = Runtime.getRuntime
     while (true) {
       Thread.sleep(1000)
-      Stater.PrintMeM(runtime)
+      utility.Stater.PrintMeM(runtime)
     }
   }
 }

@@ -1,13 +1,15 @@
 package utility
 
+import ch.ethz.dal.tinyir.util.StopWatch
 
-/**
-  * Created by andsora on 12/6/16.
-  */
 class Stater(val sw: StopWatch, val runtime: Runtime) {
+  val mb = 1024 * 1024
+
   def start(): Unit = {
     sw.start
   }
+
+  def freeMeM() = runtime.freeMemory / mb
 
   def PrintMeM(): Unit = {
     val mb = 1024 * 1024
@@ -27,4 +29,5 @@ class Stater(val sw: StopWatch, val runtime: Runtime) {
     println()
     PrintMeM()
   }
+
 }
