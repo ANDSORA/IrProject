@@ -1,6 +1,7 @@
 package Preprocessing
 
 import ch.ethz.dal.tinyir.processing.Document
+import scala.collection.mutable.{HashMap => HMap}
 
 /**
   * Created by andsora on 11/29/16.
@@ -19,8 +20,8 @@ class MyDocument (id: Int, nam: String, txt: String, head: String = "") extends 
   def name = nam
   def date = ""
   def content = ""
-  override def ID = id
   override def tokens = PreProcessor.tokenWasher(txt)
+  override def ID = id
 
   /** toString method
     *
@@ -33,4 +34,13 @@ class MyDocument (id: Int, nam: String, txt: String, head: String = "") extends 
       "Tokens: " + tokens + "\n" +
       "**********"
   }
+}
+
+class FeatureDocument (id: Int, nam: String, t: HMap[Int,Int], head: String = "") extends Document {
+  def title = head
+  def body = ""
+  def name = nam
+  def date = ""
+  def content = ""
+  def tf = t
 }
