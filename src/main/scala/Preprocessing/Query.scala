@@ -4,7 +4,7 @@ package Preprocessing
   * Created by Junlin on 12/5/16.
   */
 
-/** Query class that contains topic id and (tokenized) content
+/** Query class that contains topic id and (preprocessed) content
   *
   * @param id
   * @param content: list of strings that are already tokenized, token-washed!

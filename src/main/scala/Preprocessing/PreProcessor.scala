@@ -5,6 +5,7 @@ import ch.ethz.dal.tinyir.processing.Tokenizer
 import ch.ethz.dal.tinyir.processing.StopWords
 import ch.ethz.dal.tinyir.lectures.TermFrequencies
 import ch.ethz.dal.tinyir.io.TipsterStream
+import ch.ethz.dal.tinyir.util.StopWatch
 import com.github.aztek.porterstemmer.PorterStemmer
 
 import scala.collection.mutable.HashSet
