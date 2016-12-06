@@ -66,6 +66,26 @@ object PreProcessor {
 
   }
   */
+  // construct a ListBuffer with (HashMap[tfidf, vocab], DocId) This is to calculate for each document what is the tfidf weight for each token
+  def gettfidfSample(docs: Stream[Document], TokenMap: HashMap[String, Int],
+                sample: ListBuffer[(HashMap[Int, Double], Int)]): Unit = {
+    var times = 0
+    var ID = 0
+    val df = MutMap[String, Int]()
+    val n = docs.length
+    for (doc <- docs) {
+      df ++= doc.tokens.distinct.map(t => t -> (1+df.getOrElse(t,0)))
+    }
+    val idf = TermFrequencies.idf(df.toMap,n)
+    for (doc <- docs) {
+      if ({times += 1; times} % 100 == 0) println("(getSample) processed files with tfidfweight: " + times)
+      val tf = TermFrequencies.tf(doc.tokens)
+      val ltf = TermFrequencies.logtf(tf)
+      val tfidf = ltf.map{case(k,v) => (k, v*idf(k))}
+      sample += Tuple2(hashMapConvertor(tfidf, TokenMap), {ID += 1; ID})
+     }
+
+  }
 
   def MergeMap(Ma: Map[Int, List[Int]], Mb: Map[Int, List[Int]]): Map[Int, List[Int]] = {
     val mm = MutMap[Int, List[Int]]()

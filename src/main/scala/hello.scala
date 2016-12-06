@@ -2,11 +2,12 @@
   * Created by andsora on 11/16/16.
   */
 import ch.ethz.dal.tinyir.indexing.FreqIndex
-import ch.ethz.dal.tinyir.io.TipsterStream
+import ch.ethz.dal.tinyir.io.{DocStream, TipsterStream}
 import ch.ethz.dal.tinyir.util.StopWatch
 import ch.ethz.dal.tinyir.compression.IntegerCompression
-
+import ch.ethz.dal.tinyir.processing._
 import Preprocessing.{MyDocStream, PreProcessor}
+import ch.ethz.dal.tinyir.processing.StopWords
 
 import scala.io.StdIn.readLine
 import scala.util.control.Breaks.break
@@ -15,7 +16,12 @@ import scala.collection.mutable.HashSet
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.BitSet
 import scala.collection.mutable.ArrayBuffer
-
+import scala.io.Source
+import scala.io.Source._
+import javax.xml.parsers.DocumentBuilderFactory
+import java.io.BufferedInputStream
+import org.w3c.dom.{Document, NodeList}
+import org.xml.sax.InputSource
 
 class Stater(val sw: StopWatch, val runtime: Runtime) {
   def start(): Unit = {
@@ -57,7 +63,7 @@ class MyThread extends Runnable {
 
 object hello extends App {
   println("Hello, IrProject.")
-
+ /*
   // set state reporter
   val state = new Stater(new StopWatch, Runtime.getRuntime)
   state.start()
@@ -82,4 +88,22 @@ object hello extends App {
   Sample.toList
   state.PrintAll()
   println("\nSample constructed.\n")
+  */
+
+
+
+  val query = Source.fromFile("data/questions-descriptions.txt").getLines()
+    .filter(_.contains("<title>")).map(s => s.replaceAll("<title>","")
+    .replaceAll("Topic: ","")).replaceAll("[,;:?!*&$-+\"]"," ").replaceAll("\\*s+"," ").trim.toLowerCase)
+                                                                                                                    //.replaceAll("""([\p{Punct}&&[^.]]|\b\p{IsLetter}{1,2}\b)""", "").trim)
+  var n = 0
+  for (a <- query){
+    //a.map(_.trim)
+    println(a)
+    n += 1
+    println(n)
+  }
+
+
+  println("\n"+n)
 }
