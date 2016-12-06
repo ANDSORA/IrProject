@@ -36,11 +36,21 @@ class MyDocument (id: Int, nam: String, txt: String, head: String = "") extends 
   }
 }
 
-class FeatureDocument (id: Int, nam: String, t: HMap[Int,Int], head: String = "") extends Document {
-  def title = head
+class FeatureDocument (id: Int, nam: String, t: HMap[Int,Int], head: List[String] = List()) extends Document {
+  def title = ""
   def body = ""
   def name = nam
   def date = ""
   def content = ""
   def tf = t
+  def headTf = head
+  override def ID = id
+
+  override def toString(): String = {
+    "**********" + "\n" +
+      "ID: " + ID + ", Name: " + name + "\n" +
+      "Title: " + head + "\n" +
+      "Tokens: " + tf + "\n" +
+      "**********"
+  }
 }

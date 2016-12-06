@@ -1,9 +1,4 @@
-import scala.collection.immutable.HashSet
-
 val s = Set(1,2,3)
-s + 3
+val v = Set(4,5)
 
-val hs = HashSet(1,2,3)
-hs + 3
-
-List().contains(1)
+v ++ v.filter(s.contains(_))
