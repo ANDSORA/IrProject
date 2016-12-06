@@ -7,9 +7,10 @@ import ch.ethz.dal.tinyir.processing.Tokenizer
 import ch.ethz.dal.tinyir.processing.StopWords
 import ch.ethz.dal.tinyir.util.StopWatch
 
-import scala.collection.mutable.{ListBuffer, HashMap => HMap, Map => MutMap}
+import scala.collection.mutable.{ListBuffer, HashMap => HMap}
 import utility.Stater
 import io.MyTipsterStream
+import scala.io.Source
 
 
 /**
@@ -172,6 +173,34 @@ object PreProcessor {
     bw.close()
   }
 
+  /** Load token map from dir
+    *
+    * @param dir
+    * @return
+    */
+  def loadTokenMap(dir: String) = {
+    val TokenMap = HMap[String, (Int, Int)]()
+    val bufferedSource = Source.fromFile(dir)
+    bufferedSource.getLines().foreach { line =>
+      val Array(term, term_id, term_freq) = line.split(" ").map(_.trim())
+      TokenMap += term -> (term_id.toInt, term_freq.toInt)
+    }
+    TokenMap
+  }
+
+  /** Load postings from dir
+    *
+    * @param dir
+    */
+  def loadPostings(dir: String) = {
+    val postings = HMap[Int, List[Int]]()
+    val bufferedSource = Source.fromFile(dir)
+    bufferedSource.getLines().foreach { line =>
+      val Array(term_id, doc_id_list) = line.split("->").map(_.trim())
+      postings += term_id.toInt -> doc_id_list.split(" ").map(_.trim().toInt).toList
+    }
+    postings
+  }
   /*
   def hashMapConvertor(m: Map[String, Double], TokenMap: HMap[String, Int]):
       HMap[Int, Double] = {
@@ -216,23 +245,24 @@ object PreProcessor {
 
     val tips = new MyTipsterStream("data/raw")
 
-    val It_1 = tips.stream.take(100).toIterator
+    /*
+    val It_1 = tips.stream.toIterator
     val TokenMap = getTokenMap(It_1, 10)
     println("The size of Map = " + TokenMap.size)
     ST.PrintAll()
     //println(TokenMap.filter(aa => aa._2._2 == 15))
 
-    val It_2 = tips.stream.take(100).toIterator
+    val It_2 = tips.stream.toIterator
     val result = getPostingsAndDocs(It_2, TokenMap, ST)
     val postings = result._1
     val docs = result._2
-    //getDocs(It_2, docs)
-//    println(postings.take(100))
-//    println(docs.take(10))
-    saveTokenMap("data/tokenmap.txt", TokenMap)
-    savePostings("data/postings.txt", postings)
-    println(docs(35))
-    println(docs(2))
+    */
+//    saveTokenMap("data/tokenmap.txt", TokenMap)
+//    savePostings("data/postings.txt", postings)
+    val tokenmap = loadTokenMap("data/tokenmap.txt")
+    val postings = loadPostings("data/postings.txt")
+    println(tokenmap.take(10))
+    println(postings.take(10))
     ST.PrintAll()
   }
 
