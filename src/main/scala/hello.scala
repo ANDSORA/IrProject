@@ -1,52 +1,11 @@
 /**
   * Created by andsora on 11/16/16.
   */
-import ch.ethz.dal.tinyir.indexing.FreqIndex
-import ch.ethz.dal.tinyir.io.{DocStream, TipsterStream}
-import ch.ethz.dal.tinyir.util.StopWatch
-import ch.ethz.dal.tinyir.compression.IntegerCompression
-import ch.ethz.dal.tinyir.processing._
-import Preprocessing.{MyDocStream, PreProcessor}
-import ch.ethz.dal.tinyir.processing.StopWords
 
-import scala.io.StdIn.readLine
-import scala.util.control.Breaks.break
-import scala.collection.mutable.ListBuffer
-import scala.collection.mutable.HashSet
-import scala.collection.mutable.HashMap
-import scala.collection.mutable.BitSet
-import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
-import scala.io.Source._
-import javax.xml.parsers.DocumentBuilderFactory
-import java.io.BufferedInputStream
-import org.w3c.dom.{Document, NodeList}
-import org.xml.sax.InputSource
-
-class Stater(val sw: StopWatch, val runtime: Runtime) {
-  def start(): Unit = {
-    sw.start
-  }
-
-  def PrintMeM(): Unit = {
-    val mb = 1024 * 1024
-    println("** Used Memory:  " + (runtime.totalMemory - runtime.freeMemory) / mb)
-    println("** Free Memory:  " + runtime.freeMemory / mb)
-    println("** Total Memory: " + runtime.totalMemory / mb)
-    println("** Max Memory:   " + runtime.maxMemory / mb)
-  }
-
-  def PrintTime(): Unit = {
-    println("** TIME:         " + sw.uptonow)
-  }
-
-  def PrintAll(): Unit = {
-    println()
-    PrintTime()
-    println()
-    PrintMeM()
-  }
-}
+import Preprocessing.PreProcessor
+import scala.collection.mutable.{HashMap => HMap, ListBuffer, Map => MutMap}
+import com.github.aztek.porterstemmer.PorterStemmer
 
 /*
 class MyThread extends Runnable {
@@ -55,7 +14,7 @@ class MyThread extends Runnable {
     val runtime = Runtime.getRuntime
     while (true) {
       Thread.sleep(1000)
-      Stater.PrintMeM(runtime)
+      utility.Stater.PrintMeM(runtime)
     }
   }
 }
@@ -63,6 +22,7 @@ class MyThread extends Runnable {
 
 object hello extends App {
   println("Hello, IrProject.")
+
  /*
   // set state reporter
   val state = new Stater(new StopWatch, Runtime.getRuntime)
@@ -91,19 +51,61 @@ object hello extends App {
   */
 
 
+  val fname = "data/questions-descriptions.txt"
+
+  PreProcessor.getQuery(fname).foreach(m => println(m._1+"  "+m._2))
+
+ println("\n")
 
   val query = Source.fromFile("data/questions-descriptions.txt").getLines()
     .filter(_.contains("<title>")).map(s => s.replaceAll("<title>","")
-    .replaceAll("Topic: ","")).replaceAll("[,;:?!*&$-+\"]"," ").replaceAll("\\*s+"," ").trim.toLowerCase)
-                                                                                                                    //.replaceAll("""([\p{Punct}&&[^.]]|\b\p{IsLetter}{1,2}\b)""", "").trim)
+    .replaceAll("Topic: ",""))//.trim.toLowerCase().split("[ /,;:?!*&$-+\"\'\t\n\r\f]+").toList.filter(!_.isEmpty))
+
+  //replaceAll("[,;:?!*&$-+\"\\s+]", " "))//.replaceAll("\\s+", " ").trim.toLowerCase)
+
+
+  val query2 = Source.fromFile("data/questions-descriptions.txt").getLines()
+    .filter(_.contains("<title>")).map(s => s.replaceAll("<title>","")
+    .replaceAll("Topic: ","").trim.toLowerCase().split("[ -/,;:?!*&$-+\"\t\n\r\f]+").filter(w => w.length >= 3).toList.filter(!_.isEmpty))
+
+  //val queryterm  = query2.map(strList => PreProcessor.tokenWasher(strList.map(PorterStemmer.stem(_))))
+  val queryterm2 = query2.map(strList => PreProcessor.tokenWasher(strList))
   var n = 0
-  for (a <- query){
+
+  /*
+  for (a <- queryterm2){
     //a.map(_.trim)
     println(a)
+  //  println(b)
     n += 1
     println(n)
   }
+  */
+/*
+  var m = 0
+  for (a <- query2){
+    //a.map(_.trim)
+    println(a)
+    m += 1
+    println(m)
+  }
+*/
+
+  val queryFinal = HMap[List[String],Int]()
+  var ID = 50
+
+  for (b <- queryterm2){
+      queryFinal += b -> {ID += 1; ID}
+  }
+
+  queryFinal.foreach(m => println(m._1+"  "+m._2))
+
+
 
 
   println("\n"+n)
+
+
+
+  // TODO ...
 }
