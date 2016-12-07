@@ -20,7 +20,7 @@ class MyDocument (id: Int, nam: String, txt: String, head: String = "") extends 
   def name = nam
   def date = ""
   def content = ""
-  override def tokens = PreProcessor.tokenWasher(txt)
+  override def tokens = PreProcessor.tokenize(txt) // only tokenized, not washed!
   override def ID = id
 
   /** toString method
@@ -36,7 +36,7 @@ class MyDocument (id: Int, nam: String, txt: String, head: String = "") extends 
   }
 }
 
-class FeatureDocument (id: Int, nam: String, t: Map[Int,Int], hd: List[Int] = List()) extends Document {
+class FeatureDocument (id: Int, nam: String, t: HMap[Int,Int], hd: List[Int] = List()) extends Document {
   def title = ""
   def body = ""
   def name = nam

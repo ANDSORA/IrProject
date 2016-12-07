@@ -1,8 +1,10 @@
 package models
 
-import Preprocessing.{MyDocument, Query}
+import Preprocessing.PreProcessor._
+import Preprocessing.{FeatureDocument, MyDocument, Query}
 import postprocessing.Postprocessor
 import utility.WordProber
+import collection.mutable.{HashMap => MutHashMap}
 
 /**
   * Created by Junlin on 11/30/16.
@@ -14,7 +16,7 @@ case class PointwiseRanker(val q: Query) {
   /**
     * Compute the query probability: P(q|d) = product of P(w|d) where w belongs to query q
    */
-  def queryScore(wordProb: (String, MyDocument) => Double)(doc: MyDocument):Double = {
+  def queryScore(wordProb: (Int, FeatureDocument) => Double)(doc: FeatureDocument):Double = {
     q.content.map(wordProb(_, doc)).product
   }
 
@@ -24,26 +26,30 @@ case class PointwiseRanker(val q: Query) {
     * @param docs
     * @return
     */
-  def rankDocs(wordProb: (String, MyDocument) => Double)(docs: Stream[MyDocument]) = {
-    docs.map(doc => (doc.name, queryScore(wordProb)(doc))).sortWith(_._2 > _._2)
+  def rankDocs(wordProb: (Int, FeatureDocument) => Double)(docs: Set[FeatureDocument]): List[(String, Double)] = {
+    docs.map(doc => (doc.name, queryScore(wordProb)(doc))).toList.sortWith(_._2 > _._2)
   }
 
 }
 
 object PointwiseRanker extends App {
-
-  val vocabulary = Set("airbus","usa","france","eth","computer","science")
+  val vocabulary = MutHashMap("airbus" -> (1,1),"usa" -> (2,1),
+    "france" -> (3,1),"eth" -> (4,1),
+    "computer" -> (5,1),"science" -> (6,1))
   val ntopics = 2
-  val doc0       = new MyDocument(0, "doc_0", "usa france airbus")
-  val doc1       = new MyDocument(1, "doc_1", "eth computer science")
-  val doc2       = new MyDocument(2, "doc_2", "airbus eth france science")
-  val doc3       = new MyDocument(3, "doc_3", "usa computer airbus airbus france usa france airbus")
-  val stream     = Stream(doc0, doc1, doc2, doc3)
-  val model      = new TopicModel(vocabulary, stream, ntopics)
+  val doc0       = new FeatureDocument(0, "doc_0", tf(tokenWasher("usa france airbus"), vocabulary))
+  val doc1       = new FeatureDocument(1, "doc_1", tf(tokenWasher("eth computer science"), vocabulary))
+  val doc2       = new FeatureDocument(2, "doc_2", tf(tokenWasher("airbus eth france science"),vocabulary))
+  val collection = Set(doc0, doc1, doc2)
+  val model      = new TopicModel(vocabulary.map(_._2._1).toSet, collection, ntopics)
 
-  model.learn(50)
-  val query = Query(0, List("airbus", "usa"))
+
+  var count = 0.0
+  model.learn(100)
+
+  val query = Query(0, List(1,2))
   val ranker = new PointwiseRanker(query)
-  val ranking = ranker.rankDocs(WordProber.jmSmoothedWordProb(WordProber.naiveWordProb, model.wordProb, 0.1))(stream).toList
+  val ranking = ranker.rankDocs(WordProber.jmSmoothedWordProb(WordProber.naiveWordProb, model.wordProb, 0.1))(collection).toList
   println(Postprocessor.outputRanking(query, ranking))
+
 }
