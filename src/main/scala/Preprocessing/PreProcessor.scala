@@ -3,7 +3,7 @@ package Preprocessing
 import java.io.{BufferedWriter, File, FileWriter}
 
 import ch.ethz.dal.tinyir.processing.Document
-import ch.ethz.dal.tinyir.processing.Tokenizer
+//import ch.ethz.dal.tinyir.processing.Tokenizer
 import ch.ethz.dal.tinyir.processing.StopWords
 import ch.ethz.dal.tinyir.util.StopWatch
 
@@ -20,13 +20,42 @@ import scala.io.Source
 
 object PreProcessor {
 
+  /** Add more rules of split
+    * such as '-' and '-' are actually different even though they look the same
+    *
+    * @param text
+    * @return
+    */
+  def tokenize(text: String) = {
+    text.toLowerCase.split("[ .,;:?!*&$--+\"\'\t\n\r\f]+").filter(w => w.length >= 3).toList
+  }
+
   /** First tokenize a string into a list of strings
     * Then, remove stop words and non-alphabetical words from a list of strings
+    * SPECIAL RULES:
+    * keep U.S.
+    * turn presidentialcampaign into sperate words
     *
     * @param content
     * @return
     */
-  def tokenWasher(content: String): List[String] = tokenWasher(Tokenizer.tokenize(content))
+  def tokenWasher(content: String): List[String] = {
+    val tokens = tokenWasher(tokenize(content)).toBuffer
+    // Special rule
+    val exceptionWords = List("U.S.")
+    val replaceWords = Map("presidentialcampaign" -> List("presidential", "campaign"))
+    exceptionWords.foreach{ word =>
+      if (content.contains(word)) {
+        tokens += word
+      }
+    }
+    val tokensWithAdditionalWords = ListBuffer[String]()
+    for (tk <- tokens) {
+      if (replaceWords.contains(tk)) tokensWithAdditionalWords ++= replaceWords(tk)
+      else tokensWithAdditionalWords += tk
+    }
+    tokensWithAdditionalWords.toList
+  }
 
   /** Remove stop words and non-alphabetical words from a list of strings
     *

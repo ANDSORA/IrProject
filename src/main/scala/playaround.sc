@@ -1,4 +1,8 @@
-val s = Set(1,2,3)
-val v = Set(4,5)
+import Preprocessing.PreProcessor
+import Preprocessing.PreProcessor.{tokenWasher, tokenize}
 
-v ++ v.filter(s.contains(_))
+import scala.collection.mutable.ListBuffer
+
+val content = "U.S., presidentialcampaign"
+
+PreProcessor.tokenWasher(content)
