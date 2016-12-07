@@ -3,7 +3,6 @@ package Preprocessing
 import java.io.{BufferedWriter, File, FileWriter}
 
 import ch.ethz.dal.tinyir.processing.Document
-//import ch.ethz.dal.tinyir.processing.Tokenizer
 import ch.ethz.dal.tinyir.processing.StopWords
 import ch.ethz.dal.tinyir.util.StopWatch
 
@@ -19,6 +18,9 @@ import scala.io.Source
 
 
 object PreProcessor {
+
+  val ExceptionWords: List[String] = List("U.S.")
+  val ReplaceWords: Map[String, List[String]] = Map("presidentialcampaign" -> List("presidential", "campaign"))
 
   /** Add more rules of split
     * such as '-' and '-' are actually different even though they look the same
@@ -63,8 +65,8 @@ object PreProcessor {
     * @return
     */
   def tokenWasher(tokens: List[String]): List[String] = {
-    StopWords.filterOutSW(tokens)
-              .filter(s => s.map(c => c.isLetter).reduce(_ && _)).toList
+    val Tokens = StopWords.filterOutSW(tokens)
+              .filter(s => s.map(c => c.isLetter).reduce(_ && _)).toBuffer
   }
 
   /** Iterate whole collection of documents and return a token map
@@ -110,7 +112,7 @@ object PreProcessor {
     for (doc <- it) {
       // print the memory usage and time
       if ({times += 1; times} % 100 == 0) {
-        println("(getPostings) processed files: " + times)
+        println("(getPostingsAndDocs) processed files: " + times)
         if (times % 1000 == 0) {
           println("The size: " + postings.size)
           ST.PrintAll()
@@ -274,7 +276,6 @@ object PreProcessor {
 
     val tips = new MyTipsterStream("data/raw")
 
-    /*
     val It_1 = tips.stream.toIterator
     val TokenMap = getTokenMap(It_1, 10)
     println("The size of Map = " + TokenMap.size)
@@ -285,12 +286,12 @@ object PreProcessor {
     val result = getPostingsAndDocs(It_2, TokenMap, ST)
     val postings = result._1
     val docs = result._2
-    */
-//    saveTokenMap("data/tokenmap.txt", TokenMap)
-//    savePostings("data/postings.txt", postings)
-    val tokenmap = loadTokenMap("data/tokenmap.txt")
-    val postings = loadPostings("data/postings.txt")
-    println(tokenmap.take(10))
+
+    saveTokenMap("data/tokenmap.txt", TokenMap)
+    savePostings("data/postings.txt", postings)
+    //val tokenmap = loadTokenMap("data/tokenmap.txt")
+    //val postings = loadPostings("data/postings.txt")
+    println(TokenMap.take(10))
     println(postings.take(10))
     ST.PrintAll()
   }
