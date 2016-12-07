@@ -53,15 +53,12 @@ class MyCSVReader {
 
 object MyCSVReader extends App {
   val dir = "data/relevance-judgements.csv"
+  val tokenmap = PreProcessor.loadTokenMap("data/tokenmap.txt")
   val csvReader = new MyCSVReader
   val relevJudgement = csvReader.loadRelevJudgement(dir)
 //  println(relevJudgement.get(51).mkString("\n"))
   val queries = csvReader.loadQuery("data/questions-descriptions.txt")
-  val preprocessedQueries = queries.map(elem => PreProcessor.tokenWasher(elem._2))
+  val preprocessedQueries = queries.map(elem => PreProcessor.tokenWasher(elem._2, tokenmap))
   println(queries.map(_._2).zip(preprocessedQueries).mkString("\n"))
-
-  /** 1988, U.S.
-    *
-    */
 }
 

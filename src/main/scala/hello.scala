@@ -18,5 +18,5 @@ class MyThread extends Runnable {
 object hello extends App {
   println("Hello, IrProject.")
 
-  // TODO ...
+
 }
