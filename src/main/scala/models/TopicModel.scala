@@ -1,9 +1,10 @@
 package models
 
-import Preprocessing.MyDocument
-import Preprocessing.PreProcessor
+import Preprocessing.{FeatureDocument, MyDocument}
+import Preprocessing.PreProcessor._
 import math.ProbVector
-import ch.ethz.dal.tinyir.lectures.TermFrequencies.tf
+
+
 import collection.mutable.{HashMap => MutHashMap}
 
 /** Implement Simple Topic Model
@@ -11,7 +12,7 @@ import collection.mutable.{HashMap => MutHashMap}
   * @param vocabulary: dictionary containing all words in collection
   * @param ntopics: number of topics
   */
-class TopicModel (vocabulary: Set[String], collection: Stream[MyDocument], ntopics : Int) {
+class TopicModel (vocabulary: Set[Int], collection: Set[FeatureDocument], ntopics : Int) {
 
   /** Initialization
     * Pwt: conditional probability of a word given a topic
@@ -22,29 +23,33 @@ class TopicModel (vocabulary: Set[String], collection: Stream[MyDocument], ntopi
     * Key: document id
     * Value: an array of topic distribution P(t|d)
     */
-  var Pwt = MutHashMap[String,ProbVector]()
+  var Pwt = MutHashMap[Int,ProbVector]()
   vocabulary.foreach(term => (Pwt += term -> ProbVector.random(ntopics).normalize))
 
-  var Ptd = MutHashMap[MyDocument, ProbVector]()
+  var Ptd = MutHashMap[FeatureDocument, ProbVector]()
   collection.foreach(doc => (Ptd += doc -> ProbVector.random((ntopics))))
 
   /** One iteration of the generalized Csizar algorithm to update topics of a single document
     *
     * @param Ptd
-    * @param doc
+    * @param tf
     * @return
     */
-  private def updateTopicSingleDocument(Ptd : ProbVector, doc: Map[String,Int]) : ProbVector = {
+  private def updateTopicSingleDocument(Ptd : ProbVector, tf: MutHashMap[Int,Int]) : ProbVector = {
     val newPtd = ProbVector(new Array[Double](ntopics))
-    for ((w,f) <- doc) newPtd += (Pwt(w) * Ptd).normalize(f)
+    for ((w,f) <- tf) newPtd += (Pwt(w) * Ptd).normalize(f)
     newPtd.normalize
   }
 
   /** One iteration to compute updates for word distributions from single document
+    *
+    * @param ptd
+    * @param tf
+    * @return
     */
-  def updateWordSingleDocument (ptd: ProbVector, doc: Map[String,Int]) : MutHashMap[String,ProbVector] = {
-    val result = MutHashMap[String,ProbVector]()
-    for ((w,f) <- doc) result += w -> (Pwt(w) * ptd).normalize(f)
+  def updateWordSingleDocument (ptd: ProbVector, tf: MutHashMap[Int,Int]) : MutHashMap[Int,ProbVector] = {
+    val result = MutHashMap[Int,ProbVector]()
+    for ((w,f) <- tf) result += w -> (Pwt(w) * ptd).normalize(f)
     result
   }
 
@@ -52,11 +57,10 @@ class TopicModel (vocabulary: Set[String], collection: Stream[MyDocument], ntopi
     *
     */
   def update = {
-    val newPwt = MutHashMap[String,ProbVector]()
+    val newPwt = MutHashMap[Int,ProbVector]()
     for ((doc, ptd) <- Ptd) {
-      val termFreq = tf(doc.tokens)
-      Ptd(doc) = updateTopicSingleDocument(ptd, termFreq)
-      val result = updateWordSingleDocument(Ptd(doc), termFreq)
+      Ptd(doc) = updateTopicSingleDocument(ptd, doc.tf)
+      val result = updateWordSingleDocument(Ptd(doc), doc.tf)
       val increment = result.map{
         case (k,v) => k -> ( if (newPwt.contains(k)) v + newPwt(k) else v)
       }
@@ -78,7 +82,7 @@ class TopicModel (vocabulary: Set[String], collection: Stream[MyDocument], ntopi
   /**
     * Compute P(w|d) = \sum_t=1->T P(w|t)*P(t|d)
     */
-  def wordProb(w: String, doc: MyDocument): Double = {
+  def wordProb(w: Int, doc: FeatureDocument): Double = {
     val zeroVector = new ProbVector(new Array[Double](ntopics))
     (Pwt.getOrElse(w, zeroVector)*Ptd(doc)).arr.sum
   }
@@ -89,13 +93,15 @@ object TopicModel {
 
   def main (args : Array[String]) : Unit = {
 
-    val vocabulary = Set("airbus","usa","france","eth","computer","science")
+    val vocabulary = MutHashMap("airbus" -> (1,1),"usa" -> (2,1),
+      "france" -> (3,1),"eth" -> (4,1),
+      "computer" -> (5,1),"science" -> (6,1))
     val ntopics = 2
-    val doc0       = new MyDocument(0, "doc_0", "usa france airbus")
-    val doc1       = new MyDocument(1, "doc_1", "eth computer science")
-    val doc2       = new MyDocument(2, "doc_2", "airbus eth france science")
-    val stream     = Stream(doc0, doc1, doc2)
-    val model      = new TopicModel(vocabulary, stream, ntopics)
+    val doc0       = new FeatureDocument(0, "doc_0", tf(tokenWasher("usa france airbus"), vocabulary))
+    val doc1       = new FeatureDocument(1, "doc_1", tf(tokenWasher("eth computer science"), vocabulary))
+    val doc2       = new FeatureDocument(2, "doc_2", tf(tokenWasher("airbus eth france science"),vocabulary))
+    val collection = Set(doc0, doc1, doc2)
+    val model      = new TopicModel(vocabulary.map(_._2._1).toSet, collection, ntopics)
 
 
     var count = 0.0
