@@ -34,18 +34,19 @@ object hello extends App {
   /** Uncomment to first create dictionary, postings, and preprocessed documents
     *
   val It_1 = tips.stream.toIterator
-  val TokenMap = getTokenMap(It_1, 10)
+  val TokenMap = PreProcessor.getTokenMap(It_1, 10)
   println("The size of Map = " + TokenMap.size)
   ST.PrintAll()
 
   val It_2 = tips.stream.toIterator
-  val result = getPostingsAndDocs(It_2, TokenMap, ST)
+  val result = PreProcessor.getPostingsAndDocs(It_2, TokenMap, ST)
   val postings = result._1
   val docs = result._2
-  saveDocs("data/docs.txt", docs)
-  saveTokenMap("data/tokenmap.txt", TokenMap)
-  savePostings("data/postings.txt", postings)
-  */
+  PreProcessor.saveDocs("data/docs.txt", docs)
+  PreProcessor.saveTokenMap("data/tokenmap.txt", TokenMap)
+  PreProcessor.savePostings("data/postings.txt", postings)
+  ST.PrintAll()
+    */
 
   // Load dictionary, postings, and documents
   val TokenMap = PreProcessor.loadTokenMap("data/tokenmap.txt")
@@ -59,6 +60,7 @@ object hello extends App {
   val queries = MyCSVReader.loadQuery("data/questions-descriptions.txt")
   val preprocessedQueries = queries.map(elem => new Query(elem._1,
     PreProcessor.tokenWasher(elem._2, TokenMap).map(PreProcessor.string2Id(_, TokenMap))))
+
 
   // Ranking
   val scores = ListBuffer[Double]()
