@@ -7,8 +7,8 @@ import postprocessing.Postprocessor
 
 import scala.collection.mutable.ListBuffer
 
-/**
-  * Created by andsora on 11/16/16.
+/** ntopics nIter n_related_doc MAP
+  *   40     100     1000
   */
 
 /*
@@ -63,17 +63,21 @@ object hello extends App {
   // Ranking
   val scores = ListBuffer[Double]()
   val ntopics = 40
-  val nInter = 100
+  val nIter = 50
   val vocabulary = TokenMap.map(_._2._1).toSet
   var counter = 1
   for (query <- preprocessedQueries) {
-    val collection = DocumentSearcher(postings, docs).tfidfSearchDocuments(query, 1000)
+    val collection = DocumentSearcher(postings, docs).tfidfSearchDocuments(query, 100)
+    /*
     val model = new TopicModel(vocabulary, collection, ntopics)
-    model.learn(nInter)
+    model.learn(nIter)
     val ranker = new PointwiseRanker(query)
     val ranking = ranker.rankDocs(WordProber.jmSmoothedWordProb(WordProber.naiveWordProb, model.wordProb, 0.1))(collection)
 //    val ranking = ranker.rankDocs(WordProber.dirichletSmoothedWordProb(model.wordProb, 1))(collection)
+
     scores += Postprocessor.APScore(ranking.map(_._1), relevJudgement(query.id))
+    */
+    scores += Postprocessor.APScore(collection.map(_.name).toList, relevJudgement(query.id))
     println(counter + "\n")
     counter += 1
     ST.PrintAll()

@@ -103,5 +103,4 @@ object DocumentSearcher extends App {
   val ds = DocumentSearcher(postings, collection)
   val query = Query(0, List(1,2))
   println(ds.tfidfSearchDocuments(query, 3))
-
 }
