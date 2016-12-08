@@ -1,4 +1,4 @@
-package Preprocessing
+package preprocessing
 
 import ch.ethz.dal.tinyir.processing.Document
 import scala.collection.mutable.{HashMap => HMap}
@@ -43,6 +43,9 @@ class FeatureDocument (id: Int, nam: String, t: HMap[Int,Int], hd: List[Int] = L
   def date = ""
   def content = ""
   def tf = t
+
+
+
   def head = hd
   override def ID = id
 

@@ -1,4 +1,4 @@
-package Preprocessing
+package preprocessing
 
 /**
   * Created by Junlin on 12/5/16.

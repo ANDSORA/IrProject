@@ -1,7 +1,7 @@
 package utility
 
 import ch.ethz.dal.tinyir.lectures.TermFrequencies.tf
-import Preprocessing.{FeatureDocument, MyDocument}
+import preprocessing.{FeatureDocument, MyDocument}
 import collection.mutable.{HashMap => MutHashMap}
 import com.sun.org.apache.xalan.internal.utils.FeatureManager.Feature
 

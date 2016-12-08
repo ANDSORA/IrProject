@@ -1,7 +1,8 @@
 package models
 
-import Preprocessing.{FeatureDocument, MyDocument}
-import Preprocessing.PreProcessor._
+import preprocessing.{FeatureDocument, MyDocument}
+import preprocessing.PreProcessor._
+import preprocessing.TermFeature._
 import math.ProbVector
 
 
@@ -23,7 +24,9 @@ class TopicModel (vocabulary: Set[Int], collection: Set[FeatureDocument], ntopic
     * Key: document id
     * Value: an array of topic distribution P(t|d)
     */
+
   var Pwt = MutHashMap[Int,ProbVector]()
+
   vocabulary.foreach(term => (Pwt += term -> ProbVector.random(ntopics).normalize))
 
   var Ptd = MutHashMap[FeatureDocument, ProbVector]()

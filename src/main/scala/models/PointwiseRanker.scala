@@ -1,7 +1,8 @@
 package models
 
-import Preprocessing.PreProcessor._
-import Preprocessing.{FeatureDocument, MyDocument, Query}
+import preprocessing.PreProcessor._
+import preprocessing.TermFeature._
+import preprocessing.{FeatureDocument, MyDocument, Query}
 import postprocessing.Postprocessor
 import utility.WordProber
 import collection.mutable.{HashMap => MutHashMap}

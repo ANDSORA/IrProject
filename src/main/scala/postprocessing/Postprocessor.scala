@@ -1,7 +1,7 @@
 package postprocessing
 
-import Preprocessing.Query
 import scala.math.min
+import preprocessing.Query
 import math.ProbVector
 
 /** Evaluate ranking, output results

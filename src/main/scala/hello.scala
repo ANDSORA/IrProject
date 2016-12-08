@@ -1,15 +1,14 @@
 import ch.ethz.dal.tinyir.util.StopWatch
 import io.{MyCSVReader, MyTipsterStream}
 import utility.{Stater, WordProber}
-import Preprocessing.{PreProcessor, Query}
-import models.{DocumentSearcher, PointwiseRanker, TopicModel}
+
+import preprocessing.Query
+import preprocessing.PreProcessor._
+import models.{DocumentSearcher, PointwiseRanker, TopicModel, VectorSpaceModel}
 import postprocessing.Postprocessor
 
 import scala.collection.mutable.ListBuffer
 
-/** ntopics nIter n_related_doc MAP
-  *   40     100     1000
-  */
 
 /*
 class MyThread extends Runnable {
@@ -31,8 +30,8 @@ object hello extends App {
 
   val tips = new MyTipsterStream("data/raw")
 
-  /** Uncomment to first create dictionary, postings, and preprocessed documents
-    *
+  ///** Uncomment to first create dictionary, postings, and preprocessed documents
+/*
   val It_1 = tips.stream.toIterator
   val TokenMap = PreProcessor.getTokenMap(It_1, 10)
   println("The size of Map = " + TokenMap.size)
@@ -42,25 +41,26 @@ object hello extends App {
   val result = PreProcessor.getPostingsAndDocs(It_2, TokenMap, ST)
   val postings = result._1
   val docs = result._2
-  PreProcessor.saveDocs("data/docs.txt", docs)
-  PreProcessor.saveTokenMap("data/tokenmap.txt", TokenMap)
-  PreProcessor.savePostings("data/postings.txt", postings)
-  ST.PrintAll()
-    */
+  saveDocs("data/docs.txt", docs)
+  saveTokenMap("data/tokenmap.txt", TokenMap)
+  savePostings("data/postings.txt", postings)
+*/
+
 
   // Load dictionary, postings, and documents
-  val TokenMap = PreProcessor.loadTokenMap("data/tokenmap.txt")
+  val TokenMap = loadTokenMap("data/tokenmap.txt")
   ST.PrintAll()
-  val postings = PreProcessor.loadPostings("data/postings.txt")
+  val postings = loadPostings("data/postings.txt")
   ST.PrintAll()
-  val docs = PreProcessor.loadDocs("data/docs.txt")
+  val docs = loadDocs("data/docs.txt")
   ST.PrintAll()
   // Load queries and judgement
   val relevJudgement = MyCSVReader.loadRelevJudgement("data/relevance-judgements.csv")
   val queries = MyCSVReader.loadQuery("data/questions-descriptions.txt")
   val preprocessedQueries = queries.map(elem => new Query(elem._1,
-    PreProcessor.tokenWasher(elem._2, TokenMap).map(PreProcessor.string2Id(_, TokenMap))))
+    tokenWasher(elem._2, TokenMap).map(string2Id(_, TokenMap))))
 
+  /*
 
   // Ranking
   val scores = ListBuffer[Double]()
@@ -87,4 +87,5 @@ object hello extends App {
   println(preprocessedQueries.map(_.id).zip(scores))
   println("MAP = " + scores.sum / scores.length)
   ST.PrintAll()
+  */
 }

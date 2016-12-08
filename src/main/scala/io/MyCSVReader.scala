@@ -3,7 +3,7 @@ package io
 import scala.collection.mutable
 import scala.collection.mutable.{MutableList, Set => MutSet}
 import scala.io.Source
-import Preprocessing.{PreProcessor, Query}
+import preprocessing.{PreProcessor, Query}
 import models.DocumentSearcher
 
 /** Read relevance judgement .csv file
