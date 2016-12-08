@@ -1,7 +1,8 @@
 package utility
 
 import ch.ethz.dal.tinyir.lectures.TermFrequencies.tf
-import Preprocessing.MyDocument
+import Preprocessing.{FeatureDocument, MyDocument}
+import com.sun.org.apache.xalan.internal.utils.FeatureManager.Feature
 
 /**
   * Created by Junlin on 11/30/16.
@@ -13,9 +14,8 @@ object WordProber {
     * @param w
     * @param doc
     */
-  def naiveWordProb(w: String, doc: MyDocument): Double = {
-    val termFreq = tf(doc.tokens)
-    termFreq.getOrElse(w, 0).toDouble / termFreq.values.sum.toDouble
+  def naiveWordProb(w: Int, doc: FeatureDocument): Double = {
+    doc.tf.getOrElse(w, 0).toDouble / doc.tf.values.sum.toDouble
   }
 
   // TODO: lambda depends on documents
@@ -28,9 +28,9 @@ object WordProber {
   * @param secondWordProb
   * @param lambda
   */
-  def jmSmoothedWordProb(firstWordProb: (String, MyDocument) => Double,
-                         secondWordProb: (String, MyDocument) => Double,
-                         lambda: Double)(w: String, doc: MyDocument) = {
+  def jmSmoothedWordProb(firstWordProb: (Int, FeatureDocument) => Double,
+                         secondWordProb: (Int, FeatureDocument) => Double,
+                         lambda: Double)(w: Int, doc: FeatureDocument) = {
     assert(lambda <= 1 && lambda >= 0, "Smoothing parameter should be between 0 and 1.")
     (1 - lambda) * firstWordProb(w, doc) + lambda * secondWordProb(w, doc)
   }

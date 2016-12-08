@@ -3,27 +3,26 @@ package io
 import scala.collection.mutable
 import scala.collection.mutable.{MutableList, Set => MutSet}
 import scala.io.Source
-import Preprocessing.PreProcessor
-import ch.ethz.dal.tinyir.processing.Tokenizer.tokenize
+import Preprocessing.{PreProcessor, Query}
 
 /** Read relevance judgement .csv file
   *
   */
-class MyCSVReader {
+object MyCSVReader {
 
   /** Load and read relevance judgement csv file
     *
     * @param dir
     * @return Map[Int, Set[String\]\]: map each topic to relevant documents
     */
-  def loadRelevJudgement(dir: String): Map[Int, Set[String]] = {
+  def loadRelevJudgement(dir: String): Map[Int, List[String]] = {
     val relevJudgement = MutSet[(Int, String)]()
     val bufferedSource = Source.fromFile(dir)
     bufferedSource.getLines().foreach { line =>
       val Array(topic, ignore, doc_id, relevant) = line.split(" ").map(_.trim())
-      if (relevant == "1") relevJudgement += Tuple2(topic.toInt, doc_id)
+      if (relevant == "1") relevJudgement += Tuple2(topic.toInt, doc_id.filter(_.isLetterOrDigit))
     }
-    relevJudgement.groupBy(_._1).mapValues(elem => elem.map(_._2).toSet)
+    relevJudgement.groupBy(_._1).mapValues(elem => elem.map(_._2).toList)
   }
 
   /** Load queries file
@@ -49,19 +48,20 @@ class MyCSVReader {
     }
     query_id.zip(queries).toList
   }
+
+  def main(args: Array[String]): Unit = {
+    val dir = "data/relevance-judgements.csv"
+    val TokenMap = PreProcessor.loadTokenMap("data/tokenmap.txt")
+    val relevJudgement = loadRelevJudgement(dir)
+    //  println(relevJudgement.get(51).mkString("\n"))
+    val queries = loadQuery("data/questions-descriptions.txt")
+    //  val preprocessedQueries = queries.map(elem => new Query(elem._1,
+    //    PreProcessor.tokenWasher(elem._2, TokenMap).map(PreProcessor.string2Id(_, TokenMap))))
+    //  //val preprocessedQueries = queries.map(elem => PreProcessor.tokenWasher(elem._2, TokenMap))
+    //  println(preprocessedQueries)
+    println(queries)
+  }
 }
 
-object MyCSVReader extends App {
-  val dir = "data/relevance-judgements.csv"
-  val csvReader = new MyCSVReader
-  val relevJudgement = csvReader.loadRelevJudgement(dir)
-//  println(relevJudgement.get(51).mkString("\n"))
-  val queries = csvReader.loadQuery("data/questions-descriptions.txt")
-  val preprocessedQueries = queries.map(elem => PreProcessor.tokenWasher(elem._2))
-  println(queries.map(_._2).zip(preprocessedQueries).mkString("\n"))
 
-  /** 1988, U.S.
-    *
-    */
-}
 

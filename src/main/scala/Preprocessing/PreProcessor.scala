@@ -4,14 +4,17 @@ import java.io.{BufferedWriter, File, FileWriter}
 
 import ch.ethz.dal.tinyir.processing.Document
 
+
 import scala.collection.mutable.{HashMap, ListBuffer}
 //import ch.ethz.dal.tinyir.processing.Tokenizer
+
 import ch.ethz.dal.tinyir.processing.StopWords
 import ch.ethz.dal.tinyir.util.StopWatch
 
 import scala.collection.mutable.{ListBuffer, HashMap => HMap}
 import utility.Stater
-import io.MyTipsterStream
+import io.{MyCSVReader, MyTipsterStream}
+
 import scala.io.Source
 import scala.math.log
 
@@ -21,6 +24,9 @@ import scala.math.log
 
 
 object PreProcessor {
+
+  val ExceptionWords: List[String] = List("U.S.")
+  val ReplaceWords: Map[String, List[String]] = Map("presidentialcampaign" -> List("presidential", "campaign"))
 
   /** Add more rules of split
     * such as '-' and '-' are actually different even though they look the same
@@ -32,41 +38,51 @@ object PreProcessor {
     text.toLowerCase.split("[ .,;:?!*&$--+\"\'\t\n\r\f]+").filter(w => w.length >= 3).toList
   }
 
-  /** First tokenize a string into a list of strings
-    * Then, remove stop words and non-alphabetical words from a list of strings
-    * SPECIAL RULES:
-    * keep U.S.
-    * turn presidentialcampaign into sperate words
+  /** First, tokenize a content string into a list of strings
+    * Then, keep some ExceptionWords
+    * Finally, escort the List of strings to lower tokenWasher
+    *   for further operations
     *
     * @param content
     * @return
     */
   def tokenWasher(content: String): List[String] = {
-    val tokens = tokenWasher(tokenize(content)).toBuffer
-    // Special rule
-    val exceptionWords = List("U.S.")
-    val replaceWords = Map("presidentialcampaign" -> List("presidential", "campaign"))
-    exceptionWords.foreach{ word =>
-      if (content.contains(word)) {
-        tokens += word
-      }
+    val tokens = tokenize(content).toBuffer
+    ExceptionWords.foreach{ word =>
+      if (content.contains(word)) tokens += word
     }
-    val tokensWithAdditionalWords = ListBuffer[String]()
-    for (tk <- tokens) {
-      if (replaceWords.contains(tk)) tokensWithAdditionalWords ++= replaceWords(tk)
-      else tokensWithAdditionalWords += tk
-    }
-    tokensWithAdditionalWords.toList
+    tokenWasher(tokens.toList)
   }
 
-  /** Remove stop words and non-alphabetical words from a list of strings
+  /** In additional to tokenWasher(content), filter words contained in dictionary
+    *
+    * @param content
+    * @param TokenMap
+    * @return
+    */
+  def tokenWasher(content: String, TokenMap: HMap[String, (Int, Int)]): List[String] = {
+    val tokens = tokenWasher(content)
+    tokens.filter(TokenMap.contains(_))
+  }
+
+  /** Remove stop words and non-alphabetical words from a list of tokenized strings
+    * And then deal with the ReplaceWords
     *
     * @param tokens
     * @return
     */
   def tokenWasher(tokens: List[String]): List[String] = {
-    StopWords.filterOutSW(tokens)
-              .filter(s => s.map(c => c.isLetter).reduce(_ && _)).toList
+    // remove stop words and non-alphabetical words from a list of strings
+    val Tokens = StopWords.filterOutSW(tokens)
+              .filter(s => s.map(c => c.isLetter).reduce(_ && _)).toBuffer
+
+    // deal with ReplaceWords
+    val tokensWithAdditionalWords = ListBuffer[String]()
+    for (tk <- Tokens) {
+      if (ReplaceWords.contains(tk)) tokensWithAdditionalWords ++= ReplaceWords(tk)
+      else tokensWithAdditionalWords += tk
+    }
+    tokensWithAdditionalWords.toList
   }
 
   /** Iterate whole collection of documents and return a token map
@@ -104,34 +120,34 @@ object PreProcessor {
     * @param ST
     */
   def getPostingsAndDocs(it: Iterator[Document], TokenMap: HMap[String, (Int, Int)],
-                         ST: Stater): Tuple2[HMap[Int, ListBuffer[Int]], HMap[Int, Document]] = {
+                         ST: Stater): Tuple2[HMap[Int, ListBuffer[Int]], HMap[Int, FeatureDocument]] = {
     var docID = 0
     var times = 0
     var postings = HMap[Int, ListBuffer[Int]]()
-    var docs = HMap[Int, Document]()
+    var docs = HMap[Int, FeatureDocument]()
     for (doc <- it) {
       // print the memory usage and time
       if ({times += 1; times} % 100 == 0) {
-        println("(getPostings) processed files: " + times)
+        println("(getPostingsAndDocs) processed files: " + times)
         if (times % 1000 == 0) {
           println("The size: " + postings.size)
           ST.PrintAll()
         }
       }
+      if (!doc.content.isEmpty) { // only if doc has content
+        // docID ++
+        docID += 1
+        // fill docs
+        val prunedTokens = tokenWasher(doc.content, TokenMap)
+        val prunedTitle = tokenWasher(doc.title, TokenMap)
+        docs += docID -> new FeatureDocument(docID, doc.name, tf(prunedTokens, TokenMap), if (prunedTitle.isEmpty) List(-1) else prunedTitle.map(string2Id(_, TokenMap)))
 
-      // docID ++
-      docID += 1
-
-      // fill docs
-      val prunedTokens = tokenWasher(doc.content).filter(token => TokenMap.contains(token))
-      val prunedTitle = tokenWasher(doc.title).filter(token => TokenMap.contains(token))
-      docs += docID -> new FeatureDocument(docID, doc.name, tf(prunedTokens, TokenMap), prunedTitle)
-
-      // fill postings
-      for (token <- prunedTokens ++ prunedTitle) {
-        val termID = TokenMap(token)._1
-        if (!postings.contains(termID)) postings += termID -> ListBuffer(docID)
-        else if (postings(termID).last != docID) postings(termID) += docID
+        // fill postings
+        for (token <- prunedTokens ++ prunedTitle) {
+          val termID = string2Id(token, TokenMap)
+          if (!postings.contains(termID)) postings += termID -> ListBuffer(docID)
+          else if (postings(termID).last != docID) postings(termID) += docID
+        }
       }
     }
     (postings, docs)
@@ -165,7 +181,7 @@ object PreProcessor {
   def tf(tokens: List[String], TokenMap: HMap[String, (Int, Int)]): HMap[Int, Int] = {
     val mm = HMap[Int, Int]()
     for (token <- tokens) {
-      val termID = TokenMap(token)._1
+      val termID = string2Id(token, TokenMap)
       if (!mm.contains(termID)) mm += termID -> 1
       else mm(termID) += 1
     }
@@ -188,6 +204,19 @@ object PreProcessor {
          }
     }
     tfidf // termID -> tfidfweight
+  }
+
+  /** Turn String to id
+    * Assume str is included in the dictionary
+    * else return -1
+    *
+    * @param str
+    * @param TokenMap
+    * @return
+    */
+  def string2Id(str: String, TokenMap: HMap[String, (Int, Int)]): Int = {
+    if (TokenMap.contains(str)) TokenMap(str)._1
+    else -1
   }
 
   /** Save resulting tokenmap
@@ -222,6 +251,25 @@ object PreProcessor {
     bw.close()
   }
 
+  /** Save preprocessed documents to files
+    *
+    * @param dir
+    */
+  def saveDocs(dir: String, docs: HMap[Int, FeatureDocument]) = {
+    val sep = ";"
+    def tf2String(tf: HMap[Int,Int]) = {
+      tf.map{ case (term_id, term_freq) => (term_id.toString + "->" + term_freq.toString)}.mkString(" ")
+    }
+    val file = new File(dir)
+    val bw = new BufferedWriter(new FileWriter(file))
+    // Write docs
+    for (elem <- docs) {
+      bw.write(elem._1 + sep + elem._2.name + sep + elem._2.head.mkString(" ") + sep + tf2String(elem._2.tf))
+      bw.write("\n")
+    }
+    bw.close()
+  }
+
   /** Load token map from dir
     *
     * @param dir
@@ -250,7 +298,47 @@ object PreProcessor {
     }
     postings
   }
-  /*
+
+  /** Load preprocessed docs from dir
+    *
+    * @param dir
+    */
+  def loadDocs(dir: String) = {
+    val ST = new Stater(new StopWatch, Runtime.getRuntime)
+    ST.start()
+    val docs = HMap[Int, FeatureDocument]()
+    val bufferedSource = Source.fromFile(dir)
+    var counter = 0
+    bufferedSource.getLines().foreach { line =>
+      val splitLine = line.split(";").map(_.trim())
+      if (splitLine.size == 4) {
+        val Array(doc_id, doc_name, doc_title, doc_tf) = splitLine
+        val title = doc_title.split(" ").toList.map(_.toInt)
+        val _tf = doc_tf.split(" ")
+          .map(_.trim).
+          map(_.split("->").map(_.trim) match {
+            case Array(term, term_freq) => (term.toInt, term_freq.toInt)
+          }).toMap
+        val tf = HMap[Int, Int]()
+        for (item <- _tf) {
+          tf += item._1 -> item._2
+        }
+        docs += doc_id.toInt -> (new FeatureDocument(doc_id.toInt, doc_name, tf, title))
+      }
+      else {
+        val Array(doc_id, doc_name, doc_title) = splitLine
+        val title = doc_title.split(" ").toList.map(_.toInt)
+        docs += doc_id.toInt -> (new FeatureDocument(doc_id.toInt, doc_name, HMap[Int, Int](), title))
+      }
+      if (counter % 5000 == 0) {
+        println(counter)
+        ST.PrintAll()
+      }
+      counter += 1
+    }
+    docs
+  }
+    /*
   def hashMapConvertor(m: Map[String, Double], TokenMap: HMap[String, Int]):
       HMap[Int, Double] = {
     val hm = HMap[Int, Double]()
@@ -282,37 +370,40 @@ object PreProcessor {
   }
   */
 
-  def main(args: Array[String]): Unit = {
-    /*
-    val L1 = Map(1 -> List(10, 110), 2 -> List(20, 220), 3 -> List(30, 330))
-    val L2 = Map(1 -> List(110, 1110), 4 -> List(40, 440))
-    val L3 = MergeMap(L1, L2)
-    println(L3)
-    */
-    val ST = new Stater(new StopWatch, Runtime.getRuntime)
-    ST.start()
+    def main(args: Array[String]): Unit = {
+      val ST = new Stater(new StopWatch, Runtime.getRuntime)
+      ST.start()
 
-    val tips = new MyTipsterStream("data/raw")
+      val tips = new MyTipsterStream("data/raw")
+      /*
+      val It_1 = tips.stream.toIterator
+      val TokenMap = getTokenMap(It_1, 10)
+      println("The size of Map = " + TokenMap.size)
+      ST.PrintAll()
 
-    /*
-    val It_1 = tips.stream.toIterator
-    val TokenMap = getTokenMap(It_1, 10)
-    println("The size of Map = " + TokenMap.size)
-    ST.PrintAll()
-    //println(TokenMap.filter(aa => aa._2._2 == 15))
+      val It_2 = tips.stream.toIterator
+      val result = getPostingsAndDocs(It_2, TokenMap, ST)
+      val postings = result._1
+      val docs = result._2
+      saveDocs("data/docs.txt", docs)
+      saveTokenMap("data/tokenmap.txt", TokenMap)
+      savePostings("data/postings.txt", postings)
+      */
 
-    val It_2 = tips.stream.toIterator
-    val result = getPostingsAndDocs(It_2, TokenMap, ST)
-    val postings = result._1
-    val docs = result._2
-    */
-//    saveTokenMap("data/tokenmap.txt", TokenMap)
-//    savePostings("data/postings.txt", postings)
-    val tokenmap = loadTokenMap("data/tokenmap.txt")
-    val postings = loadPostings("data/postings.txt")
-    println(tokenmap.take(10))
-    println(postings.take(10))
-    ST.PrintAll()
-  }
+      val TokenMap = loadTokenMap("data/tokenmap.txt")
+      val postings = loadPostings("data/postings.txt")
 
+      val docs = loadDocs("data/docs.txt")
+      val emptyDoc = docs.filter(_._2.tf.isEmpty)
+      val dir = "data/relevance-judgements.csv"
+      val relevJudgement = MyCSVReader.loadRelevJudgement(dir)
+      println(emptyDoc.map(_._2.name))
+      println("*******************")
+      println(emptyDoc.filter(item => relevJudgement.map(item => item._2).flatten.toList.contains(item._2.name)).map(_._2.name))
+
+      println(TokenMap.size)
+      println(postings.size)
+
+      ST.PrintAll()
+    }
 }

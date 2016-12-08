@@ -17,8 +17,7 @@ object MyTipsterStream  {
   def main(args: Array[String]) {
     val tipster = new MyTipsterStream("data/raw")
     println("Number of files in zips = " + tipster.length)
-    val doc = tipster.stream.head
-    println(doc.name + ", " + doc.title + ", " + doc.tokens)
+    tipster.stream.take(100).foreach(doc => println(doc.name + ", " + doc.title + "\n"))
     /*
     var length : Long = 0
     var tokens : Long = 0

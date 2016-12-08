@@ -7,9 +7,9 @@ package Preprocessing
 /** Query class that contains topic id and (preprocessed) content
   *
   * @param id
-  * @param content: list of strings that are already tokenized, token-washed!
+  * @param content: list of words represented by word_id
   */
-case class Query(val id: Int, val content: List[String]) {
+case class Query(val id: Int, val content: List[Int]) {
 
   /** toString method
     *
@@ -21,6 +21,6 @@ case class Query(val id: Int, val content: List[String]) {
 }
 
 object Query extends App {
-  val q = Query(51, List("airbus", "subsidies"))
+  val q = Query(51, List(1,2))
   println(q)
 }

@@ -12,13 +12,17 @@ import ch.ethz.dal.tinyir.processing.TipsterParse
   * @param is: input stream
   */
 class MyTipsterParse(is: InputStream) extends TipsterParse(is: InputStream){
-  override def title   : String = read(doc.getElementsByTagName("HEAD"))
+  override def title   : String = {
+    val t = read(doc.getElementsByTagName("HEAD"))
+    if (t.isEmpty) read(doc.getElementsByTagName("SECOND"))
+    else t
+  }
 }
 
 object MyTipsterParse {
   def main(args: Array[String]) {
     val dirname = "/Users/Junlin/Documents/ETH/Information retrieval/Projects/Project_2/data/template"
-    val fname = dirname + "/AP880302-0275 true.txt"
+    val fname = dirname + "/AP880215-0113.txt"
     val parse = new MyTipsterParse(DocStream.getStream(fname))
     val name = parse.name
     println(name)
