@@ -308,7 +308,7 @@ object PreProcessor {
     ST.start()
     val docs = HMap[Int, FeatureDocument]()
     val bufferedSource = Source.fromFile(dir)
-    var counter = 0
+    var counter = 1
     bufferedSource.getLines().foreach { line =>
       val splitLine = line.split(";").map(_.trim())
       if (splitLine.size == 4) {

@@ -2,6 +2,7 @@ package utility
 
 import ch.ethz.dal.tinyir.lectures.TermFrequencies.tf
 import Preprocessing.{FeatureDocument, MyDocument}
+import collection.mutable.{HashMap => MutHashMap}
 import com.sun.org.apache.xalan.internal.utils.FeatureManager.Feature
 
 /**
@@ -18,20 +19,30 @@ object WordProber {
     doc.tf.getOrElse(w, 0).toDouble / doc.tf.values.sum.toDouble
   }
 
-  // TODO: lambda depends on documents
+  /** Implement Bayesian smoothing using Dirichlet priors
+    *
+    * @param collectionProb
+    * @param mu
+    * @param w
+    * @param doc
+    */
+  def dirichletSmoothedWordProb(collectionProb: (Int, FeatureDocument) => Double,
+                                mu: Double = 3000)(w: Int, doc: FeatureDocument): Double = {
+    (doc.tf.getOrElse(w, 0) + mu * collectionProb(w, doc)) / (doc.tf.values.sum + mu)
+  }
 
 /**
   * Compute word probability P(w|d)
   * where P(w|d) = (1-lambda)*P^^(w|d) + lambda*P^^top(w|d)
   * Note that lambda is invariant for all documents
   * @param firstWordProb
-  * @param secondWordProb
+  * @param collectionProb
   * @param lambda
   */
   def jmSmoothedWordProb(firstWordProb: (Int, FeatureDocument) => Double,
-                         secondWordProb: (Int, FeatureDocument) => Double,
-                         lambda: Double)(w: Int, doc: FeatureDocument) = {
+                         collectionProb: (Int, FeatureDocument) => Double,
+                         lambda: Double = 0.1)(w: Int, doc: FeatureDocument): Double = {
     assert(lambda <= 1 && lambda >= 0, "Smoothing parameter should be between 0 and 1.")
-    (1 - lambda) * firstWordProb(w, doc) + lambda * secondWordProb(w, doc)
+    (1 - lambda) * firstWordProb(w, doc) + lambda * collectionProb(w, doc)
   }
 }
