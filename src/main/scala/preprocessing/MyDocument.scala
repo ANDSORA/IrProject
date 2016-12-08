@@ -1,4 +1,4 @@
-package Preprocessing
+package preprocessing
 
 import ch.ethz.dal.tinyir.processing.Document
 import scala.collection.mutable.{HashMap => HMap}

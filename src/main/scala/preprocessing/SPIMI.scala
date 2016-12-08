@@ -1,4 +1,4 @@
-package Preprocessing
+package preprocessing
 
 import java.io.{BufferedWriter, FileWriter}
 import ch.ethz.dal.tinyir.processing.XMLDocument

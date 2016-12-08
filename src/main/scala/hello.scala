@@ -1,7 +1,7 @@
 import ch.ethz.dal.tinyir.util.StopWatch
 import io.{MyCSVReader, MyTipsterStream}
 import utility.{Stater, WordProber}
-import Preprocessing.{PreProcessor, Query}
+import preprocessing.{PreProcessor, Query}
 import models.{DocumentSearcher, PointwiseRanker, TopicModel}
 import postprocessing.Postprocessor
 

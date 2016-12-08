@@ -1,6 +1,6 @@
 package postprocessing
 
-import Preprocessing.Query
+import preprocessing.Query
 import breeze.linalg.min
 import math.ProbVector
 

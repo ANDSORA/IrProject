@@ -1,7 +1,8 @@
 package models
 
-import Preprocessing.{FeatureDocument, MyDocument}
-import Preprocessing.PreProcessor._
+import preprocessing.{FeatureDocument, MyDocument}
+import preprocessing.PreProcessor._
+import preprocessing.TermFeature._
 import math.ProbVector
 
 

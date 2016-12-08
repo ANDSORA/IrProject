@@ -3,8 +3,9 @@ package models
 import scala.collection.mutable
 import collection.mutable.{HashSet, HashMap => MutHashMap}
 import scala.math.log
-import Preprocessing.{FeatureDocument, PreProcessor, Query}
-import Preprocessing.PreProcessor._
+import preprocessing.{FeatureDocument, Query}
+import preprocessing.PreProcessor._
+import preprocessing.TermFeature._
 import io.MyCSVReader
 import ch.ethz.dal.tinyir.util.StopWatch
 import utility.Stater
@@ -40,15 +41,12 @@ case class DocumentSearcher(val postings: MutHashMap[Int, List[Int]], val docs: 
     * @param collectionSize
     * @return
     */
-  def tfidf(q: Query, d: FeatureDocument, collectionSize: Int): Tuple2[Double, FeatureDocument] = {
-    def singletfidf(w: Int): Double = {
-      log(1 + d.tf.getOrElse(w, 0).toDouble) * log(collectionSize / postings(w).length.toDouble)
-    }
-    (q.content.map(singletfidf(_)).sum, d)
+  def tfidfQueryTuple(q: Query, d: FeatureDocument, collectionSize: Int): Tuple2[Double, FeatureDocument] = {
+    (q.content.map(termID => tfidf(d.tf.getOrElse(termID, 0), postings(termID).length, collectionSize)).sum, d)
   }
 
 
-  /** Return documents based on td-idf
+  /** Return documents based on tf-idf
     *
     * @param q
     * @param n: number of returned documents
@@ -64,7 +62,7 @@ case class DocumentSearcher(val postings: MutHashMap[Int, List[Int]], val docs: 
 
     val pq = collection.mutable.PriorityQueue[(Double, FeatureDocument)]()(Ordering.by(compare))
     for (item <- docs) {
-      pq += tfidf(q, item._2, docs.size)
+      pq += tfidfQueryTuple(q, item._2, docs.size)
     }
     val relatedDocuments = mutable.HashSet[FeatureDocument]()
     for (i <- 1 to n) {

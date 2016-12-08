@@ -1,4 +1,4 @@
-package Preprocessing
+package preprocessing
 
 import java.io.{BufferedWriter, File, FileWriter}
 
@@ -12,6 +12,7 @@ import io.{MyCSVReader, MyTipsterStream}
 
 import scala.io.Source
 
+import TermFeature._
 
 /**
   * Created by andsora on 11/27/16.
@@ -79,6 +80,16 @@ object PreProcessor {
     }
     tokensWithAdditionalWords.toList
   }
+
+  /*
+  def getFeatureVec(tokens: List[String], TokenMap: HMap[String, (Int,Int)]): HMap[Int, Double] = {
+    val mm = HMap[Int, Double]()
+    for (token <- tokens) {
+      val termID = string2Id(token, TokenMap)
+      if (termID >= 0) mm += termID -> tfidf()
+    }
+  }
+  */
 
   /** Iterate whole collection of documents and return a token map
     * which map a term to its id and frequency (in the whole collection)
@@ -167,21 +178,6 @@ object PreProcessor {
     docs
   }
 
-  /** Return term frequency of a given list of strings
-    *
-    * @param tokens
-    * @param TokenMap
-    * @return
-    */
-  def tf(tokens: List[String], TokenMap: HMap[String, (Int, Int)]): HMap[Int, Int] = {
-    val mm = HMap[Int, Int]()
-    for (token <- tokens) {
-      val termID = string2Id(token, TokenMap)
-      if (!mm.contains(termID)) mm += termID -> 1
-      else mm(termID) += 1
-    }
-    mm
-  }
 
   /** Turn String to id
     * Assume str is included in the dictionary
@@ -234,8 +230,8 @@ object PreProcessor {
     */
   def saveDocs(dir: String, docs: HMap[Int, FeatureDocument]) = {
     val sep = ";"
-    def tf2String(tf: HMap[Int,Int]) = {
-      tf.map{ case (term_id, term_freq) => (term_id.toString + "->" + term_freq.toString)}.mkString(" ")
+    def tf2String(TFs: HMap[Int,Int]) = {
+      TFs.map{ case (term_id, term_freq) => (term_id.toString + "->" + term_freq.toString)}.mkString(" ")
     }
     val file = new File(dir)
     val bw = new BufferedWriter(new FileWriter(file))
@@ -296,11 +292,11 @@ object PreProcessor {
           map(_.split("->").map(_.trim) match {
             case Array(term, term_freq) => (term.toInt, term_freq.toInt)
           }).toMap
-        val tf = HMap[Int, Int]()
+        val TFs = HMap[Int, Int]()
         for (item <- _tf) {
-          tf += item._1 -> item._2
+          TFs += item._1 -> item._2
         }
-        docs += doc_id.toInt -> (new FeatureDocument(doc_id.toInt, doc_name, tf, title))
+        docs += doc_id.toInt -> (new FeatureDocument(doc_id.toInt, doc_name, TFs, title))
       }
       else {
         val Array(doc_id, doc_name, doc_title) = splitLine
