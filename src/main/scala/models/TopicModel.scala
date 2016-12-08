@@ -102,6 +102,7 @@ object TopicModel {
     model.learn(100)
     model.Pwt.foreach{ case (w,a) => println(w + ": " + a.mkString(" ")) }
     model.Ptd.foreach{ case (d, t) => println(d.ID + ": " + t.mkString(" "))}
+
   }
 }
 
