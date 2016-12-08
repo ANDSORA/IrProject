@@ -1,24 +1,21 @@
-import Preprocessing.PreProcessor._
-import Preprocessing.{PreProcessor, Query}
-import io.MyCSVReader
+import scala.collection.mutable.PriorityQueue
+import scala.math
+//  import scala.collection.mutable.PriorityQueue
 
-import scala.collection.mutable
+def diff(t2: (Int,Int)) = math.abs(t2._1 - t2._2)
+// diff: (t2: (Int, Int))Int
 
-val dir = "/Users/Junlin/Documents/ETH/Information retrieval/Projects/Project_2/code/data"
-val TokenMap = PreProcessor.loadTokenMap(dir + "/tokenmap.txt")
-val postings = loadPostings(dir + "/postings.txt")
+val x = new PriorityQueue[(Int, Int)]()(Ordering.by(diff))
+// x: scala.collection.mutable.PriorityQueue[(Int, Int)] = PriorityQueue()
 
-val csvReader = new MyCSVReader
-val relevJudgement = csvReader.loadRelevJudgement(dir + "/relevance-judgements.csv")
-val queries = csvReader.loadQuery(dir + "/questions-descriptions.txt")
-val preprocessedQueries = queries.map(elem => new Query(elem._1,
-  PreProcessor.tokenWasher(elem._2, TokenMap).map(PreProcessor.string2Id(_, TokenMap))))
+x.enqueue(1 -> 1)
+x.enqueue(1 -> 2)
+x.enqueue(1 -> 3)
+x.enqueue(1 -> 4)
+x.enqueue(1 -> 0)
+x.dequeue()
+x.dequeue()
+x.dequeue()
+x.dequeue()
 
-val q = preprocessedQueries.head
-/*
-val relatedDocuments = mutable.HashSet[Int]()
-q.content.foreach{w =>
-  if (postings.contains(w)) relatedDocuments ++= postings(w).toSet
-}
-relatedDocuments.toSet
-*/
+1 to 3

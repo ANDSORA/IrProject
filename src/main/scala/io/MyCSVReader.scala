@@ -4,6 +4,7 @@ import scala.collection.mutable
 import scala.collection.mutable.{MutableList, Set => MutSet}
 import scala.io.Source
 import Preprocessing.{PreProcessor, Query}
+import models.DocumentSearcher
 
 /** Read relevance judgement .csv file
   *
@@ -53,13 +54,15 @@ object MyCSVReader {
     val dir = "data/relevance-judgements.csv"
     val TokenMap = PreProcessor.loadTokenMap("data/tokenmap.txt")
     val relevJudgement = loadRelevJudgement(dir)
+    val postings = PreProcessor.loadPostings("data/postings.txt")
+    val docs = PreProcessor.loadDocs("data/docs.txt")
     //  println(relevJudgement.get(51).mkString("\n"))
-    val queries = loadQuery("data/questions-descriptions.txt")
-    //  val preprocessedQueries = queries.map(elem => new Query(elem._1,
-    //    PreProcessor.tokenWasher(elem._2, TokenMap).map(PreProcessor.string2Id(_, TokenMap))))
-    //  //val preprocessedQueries = queries.map(elem => PreProcessor.tokenWasher(elem._2, TokenMap))
-    //  println(preprocessedQueries)
-    println(queries)
+    val queries = MyCSVReader.loadQuery("data/questions-descriptions.txt")
+    val preprocessedQueries = queries.map(elem => new Query(elem._1,
+      PreProcessor.tokenWasher(elem._2, TokenMap).map(PreProcessor.string2Id(_, TokenMap)))).take(2)
+    val query = preprocessedQueries.tail.head
+    val collection = DocumentSearcher(postings, docs).naiveSearchDocuments(query)
+    println(collection.size)
   }
 }
 
