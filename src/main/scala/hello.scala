@@ -31,6 +31,22 @@ object hello extends App {
 
   val tips = new MyTipsterStream("data/raw")
 
+  /** Uncomment to first create dictionary, postings, and preprocessed documents
+    *
+  val It_1 = tips.stream.toIterator
+  val TokenMap = getTokenMap(It_1, 10)
+  println("The size of Map = " + TokenMap.size)
+  ST.PrintAll()
+
+  val It_2 = tips.stream.toIterator
+  val result = getPostingsAndDocs(It_2, TokenMap, ST)
+  val postings = result._1
+  val docs = result._2
+  saveDocs("data/docs.txt", docs)
+  saveTokenMap("data/tokenmap.txt", TokenMap)
+  savePostings("data/postings.txt", postings)
+  */
+
   // Load dictionary, postings, and documents
   val TokenMap = PreProcessor.loadTokenMap("data/tokenmap.txt")
   ST.PrintAll()
