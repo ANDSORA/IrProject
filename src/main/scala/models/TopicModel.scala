@@ -24,9 +24,6 @@ class TopicModel (vocabulary: Set[Int], collection: Set[FeatureDocument], ntopic
     * Value: an array of topic distribution P(t|d)
     */
 
-
-  var Pwt = MutHashMap[String,ProbVector]()
-
   var Pwt = MutHashMap[Int,ProbVector]()
 
   vocabulary.foreach(term => (Pwt += term -> ProbVector.random(ntopics).normalize))

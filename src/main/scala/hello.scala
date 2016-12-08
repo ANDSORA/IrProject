@@ -2,11 +2,11 @@ import ch.ethz.dal.tinyir.util.StopWatch
 import io.{MyCSVReader, MyTipsterStream}
 import utility.{Stater, WordProber}
 import Preprocessing.{PreProcessor, Query}
-import models.{DocumentSearcher, PointwiseRanker, TopicModel}
+import models.{DocumentSearcher, PointwiseRanker, TopicModel,termbasedModel}
 import postprocessing.Postprocessor
 
 import scala.collection.mutable.ListBuffer
-
+import PreProcessor.{getTokenMap,saveDocs,saveTokenMap,savePostings,getPostingsAndDocs}
 /**
   * Created by andsora on 11/16/16.
   */
@@ -31,8 +31,8 @@ object hello extends App {
 
   val tips = new MyTipsterStream("data/raw")
 
-  /** Uncomment to first create dictionary, postings, and preprocessed documents
-    *
+  ///** Uncomment to first create dictionary, postings, and preprocessed documents
+/*
   val It_1 = tips.stream.toIterator
   val TokenMap = getTokenMap(It_1, 10)
   println("The size of Map = " + TokenMap.size)
@@ -45,7 +45,7 @@ object hello extends App {
   saveDocs("data/docs.txt", docs)
   saveTokenMap("data/tokenmap.txt", TokenMap)
   savePostings("data/postings.txt", postings)
-  */
+*/
 
   // Load dictionary, postings, and documents
   val TokenMap = PreProcessor.loadTokenMap("data/tokenmap.txt")
@@ -60,6 +60,26 @@ object hello extends App {
   val preprocessedQueries = queries.map(elem => new Query(elem._1,
     PreProcessor.tokenWasher(elem._2, TokenMap).map(PreProcessor.string2Id(_, TokenMap))))
 
+  val tbranking = new termbasedModel(postings,docs,preprocessedQueries)
+  tbranking.scoreFinal
+  //docs.get()
+  val scoreAPS = ListBuffer[Double]()
+  for (queryResult <- tbranking.scoreFinal){
+    //queryResult._2
+    val docList = ListBuffer[String]()
+    for( query1 <- queryResult._2){
+         docList += query1._2
+    }
+
+    scoreAPS += Postprocessor.APScore(docList.toList, relevJudgement(queryResult._1))
+    // val ss = queryResult._2.map{ case(k,v) => ()}                //This is result of each query, tuple of (query id , query result)
+
+
+
+  }
+  println("MAP = " +scoreAPS.sum/scoreAPS.length)
+
+  /*
   // Ranking
   val scores = ListBuffer[Double]()
   val ntopics = 40
@@ -81,4 +101,5 @@ object hello extends App {
   println(preprocessedQueries.map(_.id).zip(scores))
   println("MAP = " + scores.sum / scores.length)
   ST.PrintAll()
+  */
 }
