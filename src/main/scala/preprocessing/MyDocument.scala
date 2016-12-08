@@ -43,6 +43,9 @@ class FeatureDocument (id: Int, nam: String, t: HMap[Int,Int], hd: List[Int] = L
   def date = ""
   def content = ""
   def tf = t
+
+
+
   def head = hd
   override def ID = id
 

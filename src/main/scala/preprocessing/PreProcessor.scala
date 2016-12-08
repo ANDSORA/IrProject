@@ -3,6 +3,11 @@ package preprocessing
 import java.io.{BufferedWriter, File, FileWriter}
 
 import ch.ethz.dal.tinyir.processing.Document
+
+
+import scala.collection.mutable.{HashMap, ListBuffer}
+//import ch.ethz.dal.tinyir.processing.Tokenizer
+
 import ch.ethz.dal.tinyir.processing.StopWords
 import ch.ethz.dal.tinyir.util.StopWatch
 
@@ -177,7 +182,6 @@ object PreProcessor {
     }
     docs
   }
-
 
   /** Turn String to id
     * Assume str is included in the dictionary
