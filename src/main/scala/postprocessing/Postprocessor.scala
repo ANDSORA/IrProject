@@ -1,7 +1,7 @@
 package postprocessing
 
 import Preprocessing.Query
-import breeze.linalg.min
+import scala.math.min
 import math.ProbVector
 
 /** Evaluate ranking, output results
@@ -45,7 +45,7 @@ object Postprocessor {
 
   def main(args: Array[String]): Unit = {
     val relev = List(0, 1, 2, 3, 4)
-    val retriev = List(0, 5, 1, 6, 7, 2, 8, 9, 3, 4)
+    val retriev = List(0, 5, 1, 6, 7, 2, 8, 9, 3, 4, 5, 5, 5, 5, 5, 5, 5, 5)
     println("Expected: 0.62")
     println(Postprocessor.APScore(retriev, relev))
   }

@@ -33,44 +33,15 @@ case class DocumentSearcher(val postings: MutHashMap[Int, List[Int]], val docs: 
     relatedDocuments.toSet
   }
 
-  /** Compute tf-idf
-    *
-    * @param q
-    * @param d
-    * @param collectionSize
-    * @return
-    */
-  def tfidf(q: Query, d: FeatureDocument, collectionSize: Int): Tuple2[Double, FeatureDocument] = {
-    def singletfidf(w: Int): Double = {
-      log(1 + d.tf.getOrElse(w, 0).toDouble) * log(collectionSize / postings(w).length.toDouble)
-    }
-    (q.content.map(singletfidf(_)).sum, d)
-  }
-
-
   /** Return documents based on td-idf
     *
     * @param q
     * @param n: number of returned documents
     * @return
-    */
-  def tfidfSearchDocuments(q: Query, n: Int = 1000): Set[FeatureDocument] = {
-    /** Helper function to define ordering
-      *
-      * @param item
-      * @return
-      */
-    def compare(item: Tuple2[Double, FeatureDocument]) = item._1
-
-    val pq = collection.mutable.PriorityQueue[(Double, FeatureDocument)]()(Ordering.by(compare))
-    for (item <- docs) {
-      pq += tfidf(q, item._2, docs.size)
-    }
-    val relatedDocuments = mutable.HashSet[FeatureDocument]()
-    for (i <- 1 to n) {
-      relatedDocuments += pq.dequeue()._2
-    }
-    relatedDocuments.toSet
+  */
+  def tfidfSearchDocuments(q: Query, n: Int = 1000): List[FeatureDocument] = {
+    val tfidfModel = new TFIDFModel(postings, docs.values.toSet)
+    tfidfModel.rankDocuments(q, n)
   }
 }
 

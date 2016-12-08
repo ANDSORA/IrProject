@@ -5,14 +5,16 @@ import Preprocessing.{FeatureDocument, MyDocument, Query}
 import postprocessing.Postprocessor
 import utility.WordProber
 import collection.mutable.{HashMap => MutHashMap}
+import scala.math.min
 
 /**
   * Created by Junlin on 11/30/16.
   *
   * Class that implements pointwise ranking algorithm
+  * Given the top nRetrieval documents
   */
 
-case class PointwiseRanker(val q: Query) {
+case class PointwiseRanker(val q: Query, nRetrieval: Int) {
   /**
     * Compute the query probability: P(q|d) = product of P(w|d) where w belongs to query q
    */
@@ -27,7 +29,7 @@ case class PointwiseRanker(val q: Query) {
     * @return
     */
   def rankDocs(wordProb: (Int, FeatureDocument) => Double)(docs: Set[FeatureDocument]): List[(String, Double)] = {
-    docs.map(doc => (doc.name, queryScore(wordProb)(doc))).toList.sortWith(_._2 > _._2)
+    docs.map(doc => (doc.name, queryScore(wordProb)(doc))).toList.sortWith(_._2 > _._2).take(min(nRetrieval, docs.size))
   }
 
 }
@@ -48,7 +50,7 @@ object PointwiseRanker extends App {
   model.learn(100)
 
   val query = Query(0, List(1,2))
-  val ranker = new PointwiseRanker(query)
+  val ranker = new PointwiseRanker(query, 2)
   val ranking = ranker.rankDocs(WordProber.jmSmoothedWordProb(WordProber.naiveWordProb, model.wordProb, 0.1))(collection).toList
   println(Postprocessor.outputRanking(query, ranking))
 
