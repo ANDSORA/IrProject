@@ -331,7 +331,7 @@ object PreProcessor {
         docs += doc_id.toInt -> (new FeatureDocument(doc_id.toInt, doc_name, HMap[Int, Int](), title))
       }
       if (counter % 5000 == 0) {
-        println(counter)
+        println("(loadDocs) loaded docs: " + counter)
         ST.PrintAll()
       }
       counter += 1
