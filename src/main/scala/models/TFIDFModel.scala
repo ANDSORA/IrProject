@@ -1,6 +1,6 @@
 package models
 
-import Preprocessing.{FeatureDocument, Query}
+import preprocessing.{FeatureDocument, Query}
 import scala.collection.mutable.{HashMap => MutHashMap, HashSet, PriorityQueue}
 import scala.math._
 

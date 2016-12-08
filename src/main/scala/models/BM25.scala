@@ -1,7 +1,7 @@
 package models
 
-import Preprocessing.PreProcessor._
-import Preprocessing.{FeatureDocument, Query}
+import preprocessing.PreProcessor._
+import preprocessing.{FeatureDocument, Query}
 
 import scala.collection.mutable.{HashMap => MutHashMap, PriorityQueue, HashSet}
 import scala.math._
@@ -59,6 +59,7 @@ class BM25(postings: MutHashMap[Int, List[Int]], collection: Set[FeatureDocument
 }
 
 object BM25 extends App {
+  /*
   val vocabulary = MutHashMap("airbus" -> (1,1),"usa" -> (2,1),
     "france" -> (3,1),"eth" -> (4,1),
     "computer" -> (5,1),"science" -> (6,1))
@@ -72,4 +73,5 @@ object BM25 extends App {
   val bm25 = new BM25(postings, collection.values.toSet)
   val query = Query(0, List(1,2))
   println(bm25.rankDocuments(query))
+  */
 }

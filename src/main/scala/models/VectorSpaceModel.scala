@@ -29,7 +29,7 @@ class VectorSpaceModel(val postings: HMap[Int, List[Int]], val docs: HMap[Int, F
   }
   */
 
-  def query(q: Query): List[String] = {
+  def query(q: Query, nRetrieval: Int = 100): List[String] = {
     // construct the query vector, simple way
     val qVec = HMap[Int, Double]()
     for (termID <- q.content) {
@@ -40,7 +40,7 @@ class VectorSpaceModel(val postings: HMap[Int, List[Int]], val docs: HMap[Int, F
     val docSet = DocumentSearcher(postings, docs).tfidfSearchDocuments(q, 1000).map(doc => doc.ID).toList
 
     // return the best 100
-    docSet.map(docID => (docs(docID).name, cos(docID, qVec))).sortBy(- _._2).take(100).map(_._1)
+    docSet.map(docID => (docs(docID).name, cos(docID, qVec))).sortBy(- _._2).take(nRetrieval).map(_._1)
   }
 
   def cos(docID: Int, vec: HMap[Int, Double]): Double = cos(tfidf(docs(docID).tf, postings, docs.size), vec)

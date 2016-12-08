@@ -1,4 +1,4 @@
-import Preprocessing.{FeatureDocument, PreProcessor, Query}
+import preprocessing.{FeatureDocument, PreProcessor, Query}
 import ch.ethz.dal.tinyir.util.StopWatch
 import io.{MyCSVReader, MyTipsterStream}
 import models._
@@ -93,6 +93,30 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
     ST.PrintAll()
     (MAP, result)
   }
+
+  def vectorSpaceModel(nRetrieval: Int) = {
+    val ST = new Stater(new StopWatch, Runtime.getRuntime)
+    ST.start()
+    val VecModel = new VectorSpaceModel(postings, collection)
+    ST.PrintAll()
+    println("VecModel Construted Completed!")
+
+    val scores = ListBuffer[Double]()
+    for (q <- preprocessedQueries) {
+      val retrive = VecModel.query(q)
+      val score = Postprocessor.APScore(retrive, relevJudgement(q.id))
+      println(q.id + ": " + score)
+      scores += score
+      ST.PrintAll()
+    }
+    val result = preprocessedQueries.map(_.id).zip(scores)
+    val MAP = scores.sum / scores.length
+    println(result)
+    println("MAP = " + MAP)
+    ST.PrintAll()
+    (MAP, result)
+  }
+
 }
 object SearchEngine {
   def main(args: Array[String]): Unit = {
@@ -112,7 +136,7 @@ object SearchEngine {
     val queries = MyCSVReader.loadQuery("data/questions-descriptions.txt")
 
     val se = SearchEngine(TokenMap, postings, docs, relevJudgement, queries)
-    se.bm25Model(100)
+    se.vectorSpaceModel(100)
 //    se.tfidfModel(100)
   }
 }
