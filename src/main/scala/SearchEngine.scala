@@ -73,24 +73,22 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
     (MAP, result)
   }
 
-  def bm25Model(nRetrieval: Int) = {
-    val ST = new Stater(new StopWatch, Runtime.getRuntime)
+  def bm25Model(nRetrieval: Int, k: Double = 1.6, b: Double = 0.75) = {
     val scores = ListBuffer[Double]()
     val vocabulary = TokenMap.map(_._2._1).toSet
-    val model = new BM25(postings, collection.values.toSet)
+    val model = new BM25(postings, collection.values.toSet, k, b)
     var counter = 1
     for (query <- preprocessedQueries) {
       val retrievedDocuments = model.rankDocuments(query, nRetrieval)
-      scores += Postprocessor.APScore(retrievedDocuments.map(_.name), relevJudgement(query.id))
-      println(counter + "\n")
+      val score = Postprocessor.APScore(retrievedDocuments.map(_.name), relevJudgement(query.id))
+      scores += score
+      println(counter + ": " + score)
       counter += 1
-      ST.PrintAll()
     }
     val result = preprocessedQueries.map(_.id).zip(scores)
     val MAP = scores.sum / scores.length
     println(result)
     println("MAP = " + MAP)
-    ST.PrintAll()
     (MAP, result)
   }
 
@@ -125,18 +123,21 @@ object SearchEngine {
     ST.start()
     val tips = new MyTipsterStream("data/raw")
     // Load dictionary, postings, and documents
-    val TokenMap = PreProcessor.loadTokenMap("data/tokenmap.txt")
+    val otherDir = "data/2/"
+    val TokenMap = PreProcessor.loadTokenMap(otherDir+ "tokenmap.txt")
     ST.PrintAll()
-    val postings = PreProcessor.loadPostings("data/postings.txt")
+    val postings = PreProcessor.loadPostings(otherDir + "postings.txt")
     ST.PrintAll()
-    val docs = PreProcessor.loadDocs("data/docs.txt")
+    val docs = PreProcessor.loadDocs(otherDir + "docs.txt")
     ST.PrintAll()
     // Load queries and judgement
     val relevJudgement = MyCSVReader.loadRelevJudgement("data/relevance-judgements.csv")
     val queries = MyCSVReader.loadQuery("data/questions-descriptions.txt")
 
     val se = SearchEngine(TokenMap, postings, docs, relevJudgement, queries)
-    se.vectorSpaceModel(100)
+    var score = ListBuffer[Double]()
+    score += se.bm25Model(100, 0.4, 0.75)._1
+    println(score)
 //    se.tfidfModel(100)
   }
 }

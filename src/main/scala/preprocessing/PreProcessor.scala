@@ -3,7 +3,7 @@ package preprocessing
 import java.io.{BufferedWriter, File, FileWriter}
 
 import ch.ethz.dal.tinyir.processing.Document
-
+import com.github.aztek.porterstemmer.PorterStemmer
 
 import scala.collection.mutable.{HashMap, ListBuffer}
 //import ch.ethz.dal.tinyir.processing.Tokenizer
@@ -40,6 +40,7 @@ object PreProcessor {
   }
 
   /** First, tokenize a content string into a list of strings
+    * Remove stop words and non-alphabetical words from a list of tokenized strings
     * Then, keep some ExceptionWords
     * Finally, escort the List of strings to lower tokenWasher
     *   for further operations
@@ -48,11 +49,14 @@ object PreProcessor {
     * @return
     */
   def tokenWasher(content: String): List[String] = {
-    val tokens = tokenize(content).toBuffer
+    val tokens = tokenize(content)
+    // remove stop words and non-alphabetical words from a list of strings
+    val Tokens = StopWords.filterOutSW(tokens)
+      .filter(s => s.map(c => c.isLetter).reduce(_ && _)).toBuffer
     ExceptionWords.foreach{ word =>
-      if (content.contains(word)) tokens += word
+      if (content.contains(word)) Tokens += word
     }
-    tokenWasher(tokens.toList)
+    tokenWasher(Tokens.toList)
   }
 
   /** In additional to tokenWasher(content), filter words contained in dictionary
@@ -66,24 +70,26 @@ object PreProcessor {
     tokens.filter(TokenMap.contains(_))
   }
 
-  /** Remove stop words and non-alphabetical words from a list of tokenized strings
-    * And then deal with the ReplaceWords
+  /**
+    * Deal with the ReplaceWords
+    * Then apply stemmer if needed
     *
     * @param tokens
     * @return
     */
-  def tokenWasher(tokens: List[String]): List[String] = {
-    // remove stop words and non-alphabetical words from a list of strings
-    val Tokens = StopWords.filterOutSW(tokens)
-              .filter(s => s.map(c => c.isLetter).reduce(_ && _)).toBuffer
+  private def tokenWasher(tokens: List[String], stemmer: Boolean = true): List[String] = {
+//    // remove stop words and non-alphabetical words from a list of strings
+//    val Tokens = StopWords.filterOutSW(tokens)
+//              .filter(s => s.map(c => c.isLetter).reduce(_ && _)).toBuffer
 
     // deal with ReplaceWords
     val tokensWithAdditionalWords = ListBuffer[String]()
-    for (tk <- Tokens) {
+    for (tk <- tokens) {
       if (ReplaceWords.contains(tk)) tokensWithAdditionalWords ++= ReplaceWords(tk)
       else tokensWithAdditionalWords += tk
     }
-    tokensWithAdditionalWords.toList
+    if (stemmer) tokensWithAdditionalWords.map(PorterStemmer.stem(_)).toList
+    else tokensWithAdditionalWords.toList
   }
 
   /*
@@ -113,7 +119,7 @@ object PreProcessor {
         println("(getTokenMap) proccessed files: " + times)
       }
       // Consider both document content and title information
-      for (s <- tokenWasher(doc.tokens) ++ tokenWasher(doc.title)) {
+      for (s <- tokenWasher(doc.content) ++ tokenWasher(doc.title)) {   // ATTENTION: it should be doc.content!
         if (!mm.contains(s)) mm += s -> 1
         else mm(s) += 1
       }
@@ -348,11 +354,12 @@ object PreProcessor {
   */
 
     def main(args: Array[String]): Unit = {
+      /*
       val ST = new Stater(new StopWatch, Runtime.getRuntime)
       ST.start()
 
       val tips = new MyTipsterStream("data/raw")
-      /*
+
       val It_1 = tips.stream.toIterator
       val TokenMap = getTokenMap(It_1, 10)
       println("The size of Map = " + TokenMap.size)
@@ -365,22 +372,25 @@ object PreProcessor {
       saveDocs("data/docs.txt", docs)
       saveTokenMap("data/tokenmap.txt", TokenMap)
       savePostings("data/postings.txt", postings)
-      */
+*/
 
-      val TokenMap = loadTokenMap("data/tokenmap.txt")
-      val postings = loadPostings("data/postings.txt")
+            val TokenMap = loadTokenMap("data/tokenmap.txt")
+            val postings = loadPostings("data/postings.txt")
+            println(TokenMap.size)
+            println(postings.size)
+      /*
+              val docs = loadDocs("data/docs.txt")
+              val emptyDoc = docs.filter(_._2.tf.isEmpty)
+              val dir = "data/relevance-judgements.csv"
+              val relevJudgement = MyCSVReader.loadRelevJudgement(dir)
+              println(emptyDoc.map(_._2.name))
+              println("*******************")
+              println(emptyDoc.filter(item => relevJudgement.map(item => item._2).flatten.toList.contains(item._2.name)).map(_._2.name))
 
-      val docs = loadDocs("data/docs.txt")
-      val emptyDoc = docs.filter(_._2.tf.isEmpty)
-      val dir = "data/relevance-judgements.csv"
-      val relevJudgement = MyCSVReader.loadRelevJudgement(dir)
-      println(emptyDoc.map(_._2.name))
-      println("*******************")
-      println(emptyDoc.filter(item => relevJudgement.map(item => item._2).flatten.toList.contains(item._2.name)).map(_._2.name))
+              println(TokenMap.size)
+              println(postings.size)
 
-      println(TokenMap.size)
-      println(postings.size)
-
-      ST.PrintAll()
+              ST.PrintAll()
+              */
     }
 }
