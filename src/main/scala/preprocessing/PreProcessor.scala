@@ -158,7 +158,6 @@ object PreProcessor {
         val prunedTokens = tokenWasher(doc.content, TokenMap)
         val prunedTitle = tokenWasher(doc.title, TokenMap)
         docs += docID -> new FeatureDocument(docID, doc.name, tf(prunedTokens, TokenMap), if (prunedTitle.isEmpty) List(-1) else prunedTitle.map(string2Id(_, TokenMap)))
-
         // fill postings
         for (token <- prunedTokens ++ prunedTitle) {
           val termID = string2Id(token, TokenMap)
@@ -354,14 +353,13 @@ object PreProcessor {
   */
 
     def main(args: Array[String]): Unit = {
-      /*
       val ST = new Stater(new StopWatch, Runtime.getRuntime)
       ST.start()
 
       val tips = new MyTipsterStream("data/raw")
 
       val It_1 = tips.stream.toIterator
-      val TokenMap = getTokenMap(It_1, 10)
+      val TokenMap = getTokenMap(It_1, 9)
       println("The size of Map = " + TokenMap.size)
       ST.PrintAll()
 
@@ -369,28 +367,14 @@ object PreProcessor {
       val result = getPostingsAndDocs(It_2, TokenMap, ST)
       val postings = result._1
       val docs = result._2
-      saveDocs("data/docs.txt", docs)
-      saveTokenMap("data/tokenmap.txt", TokenMap)
-      savePostings("data/postings.txt", postings)
-*/
+      println(postings.take(10))
+      println(docs.take(10))
+      ST.PrintAll()
 
-            val TokenMap = loadTokenMap("data/tokenmap.txt")
-            val postings = loadPostings("data/postings.txt")
-            println(TokenMap.size)
-            println(postings.size)
-      /*
-              val docs = loadDocs("data/docs.txt")
-              val emptyDoc = docs.filter(_._2.tf.isEmpty)
-              val dir = "data/relevance-judgements.csv"
-              val relevJudgement = MyCSVReader.loadRelevJudgement(dir)
-              println(emptyDoc.map(_._2.name))
-              println("*******************")
-              println(emptyDoc.filter(item => relevJudgement.map(item => item._2).flatten.toList.contains(item._2.name)).map(_._2.name))
-
-              println(TokenMap.size)
-              println(postings.size)
-
-              ST.PrintAll()
-              */
+      saveDocs("data/filter-9/docs.txt", docs)
+      saveTokenMap("data/filter-9/tokenmap.txt", TokenMap)
+      savePostings("data/filter-9/postings.txt", postings)
+      println("Preprocessing Work Done.")
+      ST.PrintAll()
     }
 }

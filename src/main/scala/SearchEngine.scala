@@ -34,7 +34,7 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
     val vocabulary = TokenMap.map(_._2._1).toSet
     var counter = 1
     for (query <- preprocessedQueries) {
-      val relatedDocuments = DocumentSearcher(postings, collection).tfidfSearchDocuments(query, nRetrieval * 2).toSet
+      val relatedDocuments = DocumentSearcher(postings, collection).SearchDocuments(query, nRetrieval * 2).toSet
       val model = new TopicModel(vocabulary, relatedDocuments, ntopics)
       model.learn(nIter)
       val ranker = new PointwiseRanker(query, nRetrieval)
@@ -123,7 +123,7 @@ object SearchEngine {
     ST.start()
     val tips = new MyTipsterStream("data/raw")
     // Load dictionary, postings, and documents
-    val otherDir = "data/2/"
+    val otherDir = "data/"
     val TokenMap = PreProcessor.loadTokenMap(otherDir+ "tokenmap.txt")
     ST.PrintAll()
     val postings = PreProcessor.loadPostings(otherDir + "postings.txt")
@@ -136,7 +136,7 @@ object SearchEngine {
 
     val se = SearchEngine(TokenMap, postings, docs, relevJudgement, queries)
     var score = ListBuffer[Double]()
-    score += se.bm25Model(100, 0.4, 0.75)._1
+    score += se.vectorSpaceModel(100)._1
     println(score)
 //    se.tfidfModel(100)
   }

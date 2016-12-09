@@ -37,23 +37,24 @@ class VectorSpaceModel(val postings: HMap[Int, List[Int]], val docs: HMap[Int, F
     }
 
     // get the doc set to compute with
-    val docSet = DocumentSearcher(postings, docs).tfidfSearchDocuments(q, 1000).map(doc => doc.ID).toList
+    val docSet = DocumentSearcher(postings, docs).SearchDocuments(q, 1000).map(doc => doc.ID).toList
 
     // return the best 100
     docSet.map(docID => (docs(docID).name, cos(docID, qVec))).sortBy(- _._2).take(nRetrieval).map(_._1)
   }
 
-  def cos(docID: Int, vec: HMap[Int, Double]): Double = cos(tfidf(docs(docID).tf, postings, docs.size), vec)
+  private def cos(docID: Int, vec: HMap[Int, Double]): Double = cos(tfidf(docs(docID).tf, postings, docs.size), vec)
+  //private def cos(docID: Int, vec: HMap[Int, Double]): Double = cos(atf(docs(docID).tf), vec)
 
-  def cos(vec1: HMap[Int, Double], vec2: HMap[Int, Double]): Double = {
+  private def cos(vec1: HMap[Int, Double], vec2: HMap[Int, Double]): Double = {
     dot(vec1, vec2) / (abs(vec1) * abs(vec2))
   }
 
-  def dot(vec1: HMap[Int, Double], vec2: HMap[Int, Double]): Double = {
+  private def dot(vec1: HMap[Int, Double], vec2: HMap[Int, Double]): Double = {
     vec1.map(item => vec2.getOrElse(item._1, 0.0) * item._2).sum
   }
 
-  def abs(vec: HMap[Int, Double]): Double = {
+  private def abs(vec: HMap[Int, Double]): Double = {
     sqrt(vec.values.map(v => v*v).sum)
   }
 }
