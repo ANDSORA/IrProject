@@ -1,6 +1,6 @@
 import preprocessing.PreProcessor
 
-val content = "U.S., presidentialcampaign"
+val content = ""
 PreProcessor.tokenWasher(content)
 
 PreProcessor.ExceptionWords.foreach{ word =>

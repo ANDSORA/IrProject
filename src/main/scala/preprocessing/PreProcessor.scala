@@ -26,7 +26,7 @@ import TermFeature._
 
 object PreProcessor {
 
-  val ExceptionWords: List[String] = List("U.S.")
+  val ExceptionWords: List[String] = List("U.S.", "1988")
   val ReplaceWords: Map[String, List[String]] = Map("presidentialcampaign" -> List("presidential", "campaign"))
 
   /** Add more rules of split
@@ -157,7 +157,7 @@ object PreProcessor {
         // fill docs
         val prunedTokens = tokenWasher(doc.content, TokenMap)
         val prunedTitle = tokenWasher(doc.title, TokenMap)
-        docs += docID -> new FeatureDocument(docID, doc.name, tf(prunedTokens, TokenMap), if (prunedTitle.isEmpty) List(-1) else prunedTitle.map(string2Id(_, TokenMap)))
+        docs += docID -> new FeatureDocument(docID, doc.name, tf(prunedTokens++prunedTitle, TokenMap), if (prunedTitle.isEmpty) List(-1) else prunedTitle.map(string2Id(_, TokenMap)))
 
         // fill postings
         for (token <- prunedTokens ++ prunedTitle) {
@@ -354,14 +354,14 @@ object PreProcessor {
   */
 
     def main(args: Array[String]): Unit = {
-      /*
+
       val ST = new Stater(new StopWatch, Runtime.getRuntime)
       ST.start()
 
       val tips = new MyTipsterStream("data/raw")
 
       val It_1 = tips.stream.toIterator
-      val TokenMap = getTokenMap(It_1, 10)
+      val TokenMap = getTokenMap(It_1, 1)
       println("The size of Map = " + TokenMap.size)
       ST.PrintAll()
 
@@ -372,13 +372,15 @@ object PreProcessor {
       saveDocs("data/docs.txt", docs)
       saveTokenMap("data/tokenmap.txt", TokenMap)
       savePostings("data/postings.txt", postings)
-*/
+      println(TokenMap.size)
+      println(postings.size)
 
+/*
             val TokenMap = loadTokenMap("data/tokenmap.txt")
             val postings = loadPostings("data/postings.txt")
             println(TokenMap.size)
             println(postings.size)
-      /*
+
               val docs = loadDocs("data/docs.txt")
               val emptyDoc = docs.filter(_._2.tf.isEmpty)
               val dir = "data/relevance-judgements.csv"

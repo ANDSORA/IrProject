@@ -29,18 +29,20 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
     // Ranking
     val ST = new Stater(new StopWatch, Runtime.getRuntime)
     val scores = ListBuffer[Double]()
-    val ntopics = 40
-    val nIter = 50
+    val ntopics = 100
+    val nIter = 20
     val vocabulary = TokenMap.map(_._2._1).toSet
+    val bM25 = new BM25(postings, collection.values.toSet)
     var counter = 1
     for (query <- preprocessedQueries) {
-      val relatedDocuments = DocumentSearcher(postings, collection).tfidfSearchDocuments(query, nRetrieval * 2).toSet
+      val relatedDocuments = bM25.rankDocuments(query, nRetrieval*2).toSet
       val model = new TopicModel(vocabulary, relatedDocuments, ntopics)
       model.learn(nIter)
       val ranker = new PointwiseRanker(query, nRetrieval)
       val ranking = ranker.rankDocs(WordProber.jmSmoothedWordProb(WordProber.naiveWordProb, model.wordProb, 0.1))(relatedDocuments)
-      scores += Postprocessor.APScore(ranking.map(_._1), relevJudgement(query.id))
-      println(counter + "\n")
+      val score = Postprocessor.APScore(ranking.map(_._1), relevJudgement(query.id))
+      scores += score
+      println(query.id + ": " + "AP -> " + score + " " + "(P, R, F1) -> " + Postprocessor.f1Score(ranking.map(_._1), relevJudgement(query.id)))
       counter += 1
       ST.PrintAll()
     }
@@ -82,7 +84,7 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
       val retrievedDocuments = model.rankDocuments(query, nRetrieval)
       val score = Postprocessor.APScore(retrievedDocuments.map(_.name), relevJudgement(query.id))
       scores += score
-      println(counter + ": " + score)
+      println(query.id + ": " + "AP -> " + score + " " + "(P, R, F1) -> " + Postprocessor.f1Score(retrievedDocuments.map(_.name), relevJudgement(query.id)))
       counter += 1
     }
     val result = preprocessedQueries.map(_.id).zip(scores)
@@ -121,9 +123,8 @@ object SearchEngine {
     println("Hello, IrProject.")
     val ST = new Stater(new StopWatch, Runtime.getRuntime)
     ST.start()
-    val tips = new MyTipsterStream("data/raw")
     // Load dictionary, postings, and documents
-    val otherDir = "data/2/"
+    val otherDir = "data/4/"
     val TokenMap = PreProcessor.loadTokenMap(otherDir+ "tokenmap.txt")
     ST.PrintAll()
     val postings = PreProcessor.loadPostings(otherDir + "postings.txt")
@@ -136,8 +137,9 @@ object SearchEngine {
 
     val se = SearchEngine(TokenMap, postings, docs, relevJudgement, queries)
     var score = ListBuffer[Double]()
-    score += se.bm25Model(100, 0.4, 0.75)._1
+    score += se.bm25Model(100, 0.4, 0.5)._1
     println(score)
-//    se.tfidfModel(100)
+
   }
+
 }

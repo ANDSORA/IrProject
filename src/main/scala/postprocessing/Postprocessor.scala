@@ -17,6 +17,36 @@ object Postprocessor {
     ranking.zipWithIndex.map{ case ((doc_id, score), rank) => (q.id, rank, doc_id)}
   }
 
+  /** Compute F1 score given P and R
+    *
+    * @param P
+    * @param R
+    * @return
+    */
+  def f1Score(P: Double, R: Double): Double = 2 * P * R / (P + R)
+
+  /** Compute P, R, F1
+    *
+    * @param retriev
+    * @param relev
+    * @tparam A
+    */
+  def f1Score[A](retriev: List[A], relev: List[A]):Tuple3[Double, Double, Double] = {
+    if (retriev.isEmpty) {
+      if (relev.isEmpty) (1.0, 1.0, 1.0)
+      else (0.0, 0.0, 0.0)
+    }
+    else {
+      var TP = 0.0
+      for (item <- retriev) {
+        if (relev.contains(item)) TP += 1
+      }
+      val P = TP / retriev.length
+      val R = TP / relev.length
+      (P, R, f1Score(P, R))
+    }
+  }
+
   /** Average precision (bounded)
     *
     * @param retriev: List of document id
@@ -48,5 +78,6 @@ object Postprocessor {
     val retriev = List(0, 5, 1, 6, 7, 2, 8, 9, 3, 4, 5, 5, 5, 5, 5, 5, 5, 5)
     println("Expected: 0.62")
     println(Postprocessor.APScore(retriev, relev))
+    println(f1Score(retriev, relev))
   }
 }
