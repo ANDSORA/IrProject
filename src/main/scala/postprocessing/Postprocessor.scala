@@ -23,7 +23,7 @@ object Postprocessor {
     * @param R
     * @return
     */
-  def f1Score(P: Double, R: Double): Double = 2 * P * R / (P + R)
+  def f1Score(P: Double, R: Double): Double = if (P == 0 && R == 0) 0.0 else 2 * P * R / (P + R)
 
   /** Compute P, R, F1
     *

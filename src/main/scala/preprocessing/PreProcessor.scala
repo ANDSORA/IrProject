@@ -158,7 +158,6 @@ object PreProcessor {
         val prunedTokens = tokenWasher(doc.content, TokenMap)
         val prunedTitle = tokenWasher(doc.title, TokenMap)
         docs += docID -> new FeatureDocument(docID, doc.name, tf(prunedTokens++prunedTitle, TokenMap), if (prunedTitle.isEmpty) List(-1) else prunedTitle.map(string2Id(_, TokenMap)))
-
         // fill postings
         for (token <- prunedTokens ++ prunedTitle) {
           val termID = string2Id(token, TokenMap)
@@ -354,7 +353,6 @@ object PreProcessor {
   */
 
     def main(args: Array[String]): Unit = {
-
       val ST = new Stater(new StopWatch, Runtime.getRuntime)
       ST.start()
 
@@ -394,5 +392,14 @@ object PreProcessor {
 
               ST.PrintAll()
               */
+      println(postings.take(10))
+      println(docs.take(10))
+      ST.PrintAll()
+
+      saveDocs("data/filter-9/docs.txt", docs)
+      saveTokenMap("data/filter-9/tokenmap.txt", TokenMap)
+      savePostings("data/filter-9/postings.txt", postings)
+      println("Preprocessing Work Done.")
+      ST.PrintAll()
     }
 }

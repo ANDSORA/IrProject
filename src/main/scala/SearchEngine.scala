@@ -35,7 +35,7 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
     val bM25 = new BM25(postings, collection.values.toSet)
     var counter = 1
     for (query <- preprocessedQueries) {
-      val relatedDocuments = bM25.rankDocuments(query, nRetrieval*2).toSet
+      val relatedDocuments = DocumentSearcher(postings, collection).SearchDocuments(query, nRetrieval * 2).toSet
       val model = new TopicModel(vocabulary, relatedDocuments, ntopics)
       model.learn(nIter)
       val ranker = new PointwiseRanker(query, nRetrieval)
@@ -62,10 +62,10 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
     var counter = 1
     for (query <- preprocessedQueries) {
       val retrievedDocuments = model.rankDocuments(query, nRetrieval)
-      scores += Postprocessor.APScore(retrievedDocuments.map(_.name).toList, relevJudgement(query.id))
-      println(counter + "\n")
+      val score = Postprocessor.APScore(retrievedDocuments.map(_.name).toList, relevJudgement(query.id))
+      scores += score
+      println(query.id + ": " + "AP -> " + score + " " + "(P, R, F1) -> " + Postprocessor.f1Score(retrievedDocuments.map(_.name), relevJudgement(query.id)))
       counter += 1
-      ST.PrintAll()
     }
     val result = preprocessedQueries.map(_.id).zip(scores)
     val MAP = scores.sum / scores.length
@@ -137,9 +137,9 @@ object SearchEngine {
 
     val se = SearchEngine(TokenMap, postings, docs, relevJudgement, queries)
     var score = ListBuffer[Double]()
-    score += se.bm25Model(100, 0.4, 0.5)._1
+    score += se.tfidfModel(100)._1
+//    score += se.bm25Model(100, 0.4, 0.5)._1
+//    score += se.vectorSpaceModel(100)._1
     println(score)
-
   }
-
 }

@@ -41,11 +41,16 @@ case class DocumentSearcher(val postings: MutHashMap[Int, List[Int]], val docs: 
     * @param collectionSize
     * @return
     */
-  def tfidfQueryTuple(q: Query, d: FeatureDocument, collectionSize: Int): Tuple2[Double, FeatureDocument] = {
+  private def tfidfQueryTuple(q: Query, d: FeatureDocument, collectionSize: Int): Tuple2[Double, FeatureDocument] = {
     (q.content.map(termID => tfidf(d.tf.getOrElse(termID, 0), postings(termID).length, collectionSize)).sum, d)
   }
 
-  def tfidfSearchDocuments(q: Query, n: Int = 1000): Set[FeatureDocument] = {
+  private def atfidfQueryTuple(q: Query, d: FeatureDocument, collectionSize: Int): Tuple2[Double, FeatureDocument] = {
+    val ATFs = atf(d.tf)
+    (q.content.map(termID => atfidf(ATFs.getOrElse(termID, 0.5), postings(termID).length, collectionSize)).sum, d)
+  }
+
+  def SearchDocuments(q: Query, n: Int = 1000, IsTfIdf: Boolean = true): Set[FeatureDocument] = {
     /** Helper function to define ordering
       *
       * @param item
@@ -55,7 +60,8 @@ case class DocumentSearcher(val postings: MutHashMap[Int, List[Int]], val docs: 
 
     val pq = collection.mutable.PriorityQueue[(Double, FeatureDocument)]()(Ordering.by(compare))
     for (item <- docs) {
-      pq += tfidfQueryTuple(q, item._2, docs.size)
+      if (IsTfIdf == true) pq += tfidfQueryTuple(q, item._2, docs.size)
+      else pq += atfidfQueryTuple(q, item._2, docs.size)
     }
     val relatedDocuments = mutable.HashSet[FeatureDocument]()
     for (i <- 1 to n) {
@@ -93,5 +99,5 @@ object DocumentSearcher extends App {
   val collection = MutHashMap(1 -> doc1, 2 -> doc2, 3 -> doc3)
   val ds = DocumentSearcher(postings, collection)
   val query = Query(0, List(1,2))
-  println(ds.tfidfSearchDocuments(query, 3))
+  println(ds.SearchDocuments(query, 3))
 }
