@@ -29,11 +29,15 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
     // Ranking
     val ST = new Stater(new StopWatch, Runtime.getRuntime)
     val scores = ListBuffer[Double]()
-    val ntopics = 2
-    val nVocabulary = 1000
-    val nIter = 2
+    val ntopics = 60
+    val nVocabulary = 500000
+    val nIter = 10
     var counter = 1
-    val model = new LanguageModel(TokenMap, postings, collection.values.toSet, ntopics, nVocabulary, nIter)
+    val mustKeptWords = preprocessedQueries.map(_.content).flatten
+    val model = new LanguageModel(TokenMap, postings,
+      collection.values.toSet, ntopics,
+      nVocabulary, nIter,
+      mustKeptWords)
     for (query <- preprocessedQueries) {
       val retrievedDocuments = model.rankDocuments(query, nRetrieval)
       val score = Postprocessor.APScore(retrievedDocuments.map(_.name), relevJudgement(query.id))
@@ -52,13 +56,14 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
 
   def tfidfModel(nRetrieval: Int) = {
     val ST = new Stater(new StopWatch, Runtime.getRuntime)
+    ST.start()
     val scores = ListBuffer[Double]()
     val vocabulary = TokenMap.map(_._2._1).toSet
     val model = new TFIDFModel(postings, collection.values.toSet)
     var counter = 1
     for (query <- preprocessedQueries) {
       val retrievedDocuments = model.rankDocuments(query, nRetrieval)
-      val score = Postprocessor.APScore(retrievedDocuments.map(_.name).toList, relevJudgement(query.id))
+      val score = Postprocessor.APScore(retrievedDocuments.map(_.name), relevJudgement(query.id))
       scores += score
       println(query.id + ": " + "AP -> " + score + " " + "(P, R, F1) -> " + Postprocessor.f1Score(retrievedDocuments.map(_.name), relevJudgement(query.id)))
       counter += 1

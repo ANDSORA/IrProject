@@ -14,10 +14,11 @@ class LanguageModel(TokenMap: MutHashMap[String, (Int, Int)],
                     collection: Set[FeatureDocument],
                     ntopics: Int,
                     nVocabulary: Int = 10000,
-                    nIter: Int = 20
+                    nIter: Int = 20,
+                    mustKeptWords: List[Int] = List()
                    ) {
   // Prune vocabulary
-  val vocabulary = PreProcessor.vocabularyPruner(TokenMap, postings, collection, nVocabulary).map(_._2._1)
+  val vocabulary = PreProcessor.vocabularyPruner(TokenMap, postings, collection, nVocabulary, mustKeptWords)
   val topicModel = new TopicModel (vocabulary, collection, ntopics)
   topicModel.learn(nIter)
 
@@ -28,8 +29,7 @@ class LanguageModel(TokenMap: MutHashMap[String, (Int, Int)],
     * @return
     */
   def singleScore(q: Query, d: FeatureDocument): Double = {
-    q.content.map(WordProber.naiveWordProb(_, d)).product
-//    q.content.map(WordProber.jmSmoothedWordProb(WordProber.naiveWordProb, topicModel.wordProb)(_, d)).product
+    q.content.map(WordProber.jmSmoothedWordProb(WordProber.naiveWordProb, topicModel.wordProb)(_, d)).product
   }
 
   /** Rank documents
@@ -40,7 +40,6 @@ class LanguageModel(TokenMap: MutHashMap[String, (Int, Int)],
     */
   def rankDocuments(q: Query, n: Int = 100): List[FeatureDocument] = {
     val nRetrieval = min(n, collection.size)
-//    println(collection.map(item => (singleScore(q, item), item)).toList.take(100))
     collection.map(item => (singleScore(q, item), item)).toList.sortWith(_._1 > _._1).map(_._2).take(nRetrieval)
   }
 }

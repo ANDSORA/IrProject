@@ -212,10 +212,11 @@ object PreProcessor {
   def vocabularyPruner(TokenMap: HMap[String, (Int, Int)],
                        postings: HMap[Int, List[Int]],
                        docs: Set[FeatureDocument],
-                       n: Int = 10000) = {
+                       n: Int = 10000,
+                       mustKeptWords: List[Int] = List()) = {
     val nDocs = docs.size
-    val vocabulary = TokenMap.map(item => (item._1, (item._2._1, log(1 + item._2._2) * log(nDocs.toDouble / postings(item._2._1).length))))
-    vocabulary.toList.sortWith(_._2._2 > _._2._2).take(n).toSet
+    val vocabulary = TokenMap.map(item => (item._1, (item._2._1, log(1 + item._2._2) * log(nDocs.toDouble / postings(item._2._1).length)))).toList.sortWith(_._2._2 > _._2._2).take(n).map(_._2._1)
+    if (mustKeptWords.isEmpty) vocabulary.toSet else (vocabulary ++ mustKeptWords).toSet
   }
 
   /** Save resulting tokenmap

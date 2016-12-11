@@ -39,8 +39,13 @@ class TopicModel (vocabulary: Set[Int], collection: Set[FeatureDocument], ntopic
     */
   private def updateTopicSingleDocument(Ptd : ProbVector, tf: MutHashMap[Int,Int]) : ProbVector = {
     val newPtd = ProbVector(new Array[Double](ntopics))
-    for ((w,f) <- tf) if (Pwt.contains(w)) newPtd += (Pwt(w) * Ptd).normalize(f)
-    newPtd.normalize
+    var isVaild = false
+    for ((w,f) <- tf) if (Pwt.contains(w)) {
+      newPtd += (Pwt(w) * Ptd).normalize(f)
+      isVaild = true
+    }
+    if (isVaild) newPtd.normalize
+    else  newPtd
   }
 
   /** One iteration to compute updates for word distributions from single document
@@ -78,15 +83,17 @@ class TopicModel (vocabulary: Set[Int], collection: Set[FeatureDocument], ntopic
     *
     * @param n_iter
     */
-  def learn(n_iter: Int = 20) = for (i <- 0 until n_iter) update
+  def learn(n_iter: Int = 20) = for (i <- 0 until n_iter) {
+    update
+    println("Updated: "+ i)
+  }
 
 
   /**
     * Compute P(w|d) = \sum_t=1->T P(w|t)*P(t|d)
     */
   def wordProb(w: Int, doc: FeatureDocument): Double = {
-    val zeroVector = new ProbVector(new Array[Double](ntopics))
-    (Pwt.getOrElse(w, zeroVector)*Ptd(doc)).arr.sum
+    if (Pwt.contains(w)) (Pwt(w)*Ptd(doc)).arr.sum else 0.0
   }
 }
 
