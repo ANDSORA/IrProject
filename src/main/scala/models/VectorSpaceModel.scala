@@ -37,10 +37,15 @@ class VectorSpaceModel(val postings: HMap[Int, List[Int]], val docs: HMap[Int, F
     }
 
     // get the doc set to compute with
-    val docSet = DocumentSearcher(postings, docs).SearchDocuments(q, 1000).map(doc => doc.ID).toList
+    //val docSet = DocumentSearcher(postings, docs).SearchDocuments(q, 1000).map(doc => doc.ID).toList
+    val docSet = docs.values.map(doc => doc.ID).toList
 
-    // return the best 100
-    docSet.map(docID => (docs(docID).name, cos(docID, qVec))).sortBy(- _._2).take(nRetrieval).map(_._1)
+    // return the best nRetrieval ones
+    val ranked = docSet.map(docID => (docs(docID).name, cos(docID, qVec))).sortBy(- _._2).take(nRetrieval)
+    println("biggest: " + ranked.take(10))
+    println("smallest: " + ranked.reverse.take(10))
+    println("average: " + (ranked.map(_._2).sum / ranked.length))
+    ranked.map(_._1)
   }
 
   private def cos(docID: Int, vec: HMap[Int, Double]): Double = cos(tfidf(docs(docID).tf, postings, docs.size), vec)

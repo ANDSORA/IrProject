@@ -104,8 +104,9 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
       val retrive = VecModel.query(q)
       val score = Postprocessor.APScore(retrive, relevJudgement(q.id))
       println(q.id + ": " + score)
+      println("The true num is: " + relevJudgement(q.id).size + "\n")
       scores += score
-      ST.PrintAll()
+      //ST.PrintAll()
     }
     val result = preprocessedQueries.map(_.id).zip(scores)
     val MAP = scores.sum / scores.length
@@ -123,7 +124,7 @@ object SearchEngine {
     ST.start()
     val tips = new MyTipsterStream("data/raw")
     // Load dictionary, postings, and documents
-    val otherDir = "data/"
+    val otherDir = "data/filter-9/"
     val TokenMap = PreProcessor.loadTokenMap(otherDir+ "tokenmap.txt")
     ST.PrintAll()
     val postings = PreProcessor.loadPostings(otherDir + "postings.txt")
@@ -136,7 +137,8 @@ object SearchEngine {
 
     val se = SearchEngine(TokenMap, postings, docs, relevJudgement, queries)
     var score = ListBuffer[Double]()
-    score += se.vectorSpaceModel(100)._1
+    //score += se.vectorSpaceModel(100)._1
+    score += se.tfidfModel(100)._1
     println(score)
 //    se.tfidfModel(100)
   }
