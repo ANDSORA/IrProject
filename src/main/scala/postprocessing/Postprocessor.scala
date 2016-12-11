@@ -1,5 +1,7 @@
 package postprocessing
 
+import java.io.{BufferedWriter, File, FileWriter}
+
 import scala.math.min
 import preprocessing.Query
 import math.ProbVector
@@ -13,8 +15,17 @@ object Postprocessor {
     * @param ranking
     * @return
     */
-  def outputRanking(q: Query, ranking: List[(String, Double)]) = {
-    ranking.zipWithIndex.map{ case ((doc_id, score), rank) => (q.id, rank, doc_id)}
+  def outputRanking(q: Query, ranking: List[String]) = {
+    ranking.zipWithIndex.map{ case (doc_id, rank) => (q.id, rank + 1, doc_id)} // rank is from 1
+  }
+
+  def writeRankingToFile(dir: String, output: List[(Int, Int, String)]) = {
+    val file = new File(dir)
+    val bw = new BufferedWriter(new FileWriter(file))
+    for (item <- output) {
+      bw.write(item._1 + " " + item._2 + " " + item._3 + "\n")
+    }
+    bw.close()
   }
 
   /** Compute F1 score given P and R
