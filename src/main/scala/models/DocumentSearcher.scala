@@ -40,6 +40,11 @@ case class DocumentSearcher(val postings: MutHashMap[Int, List[Int]], val docs: 
       .reduceLeft((a, b) => sortedArrayUnion(a.toArray, b.toArray)).map(a => docs(a)).toSet
   }
 
+  def searchDocumentsWithInvertedIndexNew(q: Query): Set[Int] = {
+    q.content.map(postings.getOrElse(_, List())).filter(!_.isEmpty).sortBy(_.length)
+      .reduceLeft((a, b) => sortedArrayUnion(a.toArray, b.toArray)).toSet
+  }
+
   def searchDocumentsBrutely(q: Query): Set[FeatureDocument] = {
     val ss = mutable.Set[FeatureDocument]()
     for (doc <- docs.values) {
@@ -109,12 +114,12 @@ object DocumentSearcher {
     val postings = MutHashMap(1 -> List(1,3), 2 -> List(1), 3 -> List(1, 3),
       4 -> List(2, 3), 5 -> List(2), 6 -> List(2, 3))
     val ntopics = 2
-    val doc1       = new FeatureDocument(1, "doc_1", tf(tokenWasher("usa france airbus"), vocabulary))
-    val doc2       = new FeatureDocument(2, "doc_2", tf(tokenWasher("eth computer science"), vocabulary))
-    val doc3       = new FeatureDocument(3, "doc_3", tf(tokenWasher("airbus eth france science"),vocabulary))
+    val doc1       = new FeatureDocument(1, "doc_1", tf(tokenWasher("usa france airbus", false), vocabulary))
+    val doc2       = new FeatureDocument(2, "doc_2", tf(tokenWasher("eth computer science", false), vocabulary))
+    val doc3       = new FeatureDocument(3, "doc_3", tf(tokenWasher("airbus eth france science", false),vocabulary))
     val collection = MutHashMap(1 -> doc1, 2 -> doc2, 3 -> doc3)
     val ds = DocumentSearcher(postings, collection)
     val query = Query(0, List(1,2))
-    println(ds.SearchDocuments(query, 3))
+    println(ds.searchDocumentsWithInvertedIndex(query))
   }
 }

@@ -29,11 +29,12 @@ class TFIDFModel(postings: MutHashMap[Int, List[Int]], collection: Set[FeatureDo
   /** Return documents based on td-idf
     *
     * @param q
+    * @param docs
     * @param n: number of returned documents
     * @return
     */
-  def rankDocuments(q: Query, n: Int = 1000): List[FeatureDocument] = {
+  def rankDocuments(q: Query, docs: Set[FeatureDocument], n: Int = 1000): List[FeatureDocument] = {
     val nRetrieval = min(n, collection.size)
-    collection.map(item => tfidf(q, item, collection.size)).toList.sortWith(_._1 > _._1).map(_._2).take(nRetrieval)
+    docs.map(item => tfidf(q, item, collection.size)).toList.sortWith(_._1 > _._1).map(_._2).take(nRetrieval)
   }
 }
