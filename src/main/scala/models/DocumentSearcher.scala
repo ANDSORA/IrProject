@@ -35,24 +35,20 @@ case class DocumentSearcher(val postings: MutHashMap[Int, List[Int]], val docs: 
   }
   */
 
-  def searchDocumentsWithInvertedIndex(q: Query): Set[FeatureDocument] = {
+  def searchDocumentsWithInvertedIndex(q: Query): Set[Int] = {
     q.content.map(postings.getOrElse(_, List())).filter(!_.isEmpty).sortBy(_.length)
-      .reduceLeft((a, b) => sortedArrayUnion(a.toArray, b.toArray)).map(a => docs(a)).toSet
+      .reduceLeft((a, b) => sortedArrayUnion(a.toArray, b.toArray)).map(a => docs(a).ID).toSet
   }
 
-  def searchDocumentsWithInvertedIndexNew(q: Query): Set[Int] = {
-    q.content.map(postings.getOrElse(_, List())).filter(!_.isEmpty).sortBy(_.length)
-      .reduceLeft((a, b) => sortedArrayUnion(a.toArray, b.toArray)).toSet
-  }
-
-  def searchDocumentsBrutely(q: Query): Set[FeatureDocument] = {
-    val ss = mutable.Set[FeatureDocument]()
+  def searchDocumentsBrutely(q: Query): Set[Int] = {
+    val ss = mutable.Set[Int]()
     for (doc <- docs.values) {
-      if (q.content.map(a => doc.tf.contains(a)).reduceLeft((a,b) => a || b)) ss += doc
+      if (q.content.map(a => doc.tf.contains(a)).reduceLeft((a,b) => a || b)) ss += doc.ID
     }
     ss.toSet
   }
 
+  /*
   /** Return documents based on td-idf
     *
     * @param q
@@ -88,6 +84,7 @@ case class DocumentSearcher(val postings: MutHashMap[Int, List[Int]], val docs: 
     }
     relatedDocuments.toSet
   }
+  */
 }
 
 object DocumentSearcher {
