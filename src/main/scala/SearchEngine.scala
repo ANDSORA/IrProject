@@ -108,9 +108,9 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
       val retrive = VecModel.query(q)
       val score = Postprocessor.APScore(retrive, relevJudgement(q.id))
       println(q.id + ": " + "AP -> " + score + " " + "(P, R, F1) -> " + Postprocessor.f1Score(retrive, relevJudgement(q.id)))
-      println("The true num is: " + relevJudgement(q.id).size + "\n")
+      println("The true num is: " + relevJudgement(q.id).size)
       scores += score
-      //ST.PrintAll()
+      ST.PrintAll()
     }
     val result = preprocessedQueries.map(_.id).zip(scores)
     val MAP = scores.sum / scores.length
@@ -130,7 +130,7 @@ object SearchEngine {
     // Create data directory
     new File("data").mkdir()
     // Load dictionary, postings, and documents
-    val otherDir = "data/filter-10/"
+    val otherDir = "data/filter-1/"
     val TokenMap = PreProcessor.loadTokenMap(otherDir+ "tokenmap.txt")
     ST.PrintAll()
     val postings = PreProcessor.loadPostings(otherDir + "postings.txt")
@@ -146,9 +146,9 @@ object SearchEngine {
 //    score += se.bm25Model(100, 0.4, 0.5)._1
 //    score += se.vectorSpaceModel(100)._1
     ST.PrintAll()
-    val Tuple3(score, result, output) = se.tfidfModel(100)
+    val Tuple2(score, result) = se.vectorSpaceModel(100)
 
     println(score)
-    Postprocessor.writeRankingToFile("data/ranking-t-17.run", output) // ranking-[t|l]-[groupid].run
+    //Postprocessor.writeRankingToFile("data/ranking-t-17.run", output) // ranking-[t|l]-[groupid].run
   }
 }
