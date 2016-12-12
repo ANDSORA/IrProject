@@ -1,8 +1,8 @@
-import preprocessing.PreProcessor
+import scala.collection.mutable.{HashMap => MutHashMap}
+import preprocessing.PreProcessor._
+import preprocessing.{FeatureDocument, PreProcessor}
+import preprocessing.TermFeature._
 
-val content = "U.S., presidentialcampaign"
-PreProcessor.tokenWasher(content)
+val m = MutHashMap[Int, Int]()
 
-PreProcessor.ExceptionWords.foreach{ word =>
-  if (content.contains(word)) println(word)
-}
+for (item <- m) println(item)

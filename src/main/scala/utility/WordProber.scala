@@ -16,7 +16,8 @@ object WordProber {
     * @param doc
     */
   def naiveWordProb(w: Int, doc: FeatureDocument): Double = {
-    doc.tf.getOrElse(w, 0).toDouble / doc.tf.values.sum.toDouble
+    val nAllWords = doc.tf.values.sum.toDouble
+    if (nAllWords == 0) 0.0 else  doc.tf.getOrElse(w, 0).toDouble / nAllWords
   }
 
   /** Implement Bayesian smoothing using Dirichlet priors

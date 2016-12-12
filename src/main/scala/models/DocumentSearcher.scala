@@ -10,7 +10,7 @@ import io.MyCSVReader
 import ch.ethz.dal.tinyir.util.StopWatch
 import utility.Stater
 import scala.math.Ordering.Implicits._
-
+import utility.ListProcesser._
 
 /**
   * Created by Junlin on 12/7/16.
@@ -26,12 +26,17 @@ case class DocumentSearcher(val postings: MutHashMap[Int, List[Int]], val docs: 
     *
     * @param q
     */
-  def naiveSearchDocuments(q: Query): Set[FeatureDocument] ={
+  def naiveSearchDocuments(q: Query): Set[FeatureDocument] = {
     val relatedDocuments = mutable.HashSet[FeatureDocument]()
     q.content.foreach{w =>
       if (postings.contains(w)) relatedDocuments ++= docs.filter(item => postings(w).contains(item._1)).map(_._2)
     }
     relatedDocuments.toSet
+  }
+
+  def newNaiveSearchDocuments(q: Query): Set[FeatureDocument] = {
+    q.content.map(postings.getOrElse(_, List())).filter(!_.isEmpty).sortBy(_.length)
+      .reduceLeft((a, b) => sortedListUnion(a, b)).map(a => docs(a)).toSet
   }
 
   /** Return documents based on td-idf

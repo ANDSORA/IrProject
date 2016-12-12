@@ -4,7 +4,7 @@ import utility.{Stater, WordProber}
 
 import preprocessing.Query
 import preprocessing.PreProcessor._
-import models.{DocumentSearcher, PointwiseRanker, TopicModel, VectorSpaceModel}
+import models.{DocumentSearcher, TopicModel, VectorSpaceModel}
 import postprocessing.Postprocessor
 
 import scala.collection.mutable.ListBuffer

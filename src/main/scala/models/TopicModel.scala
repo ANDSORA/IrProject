@@ -1,10 +1,9 @@
 package models
 
-import preprocessing.{FeatureDocument, MyDocument}
+import preprocessing.{FeatureDocument, MyDocument, PreProcessor}
 import preprocessing.PreProcessor._
 import preprocessing.TermFeature._
 import math.ProbVector
-
 
 import collection.mutable.{HashMap => MutHashMap}
 
@@ -40,8 +39,13 @@ class TopicModel (vocabulary: Set[Int], collection: Set[FeatureDocument], ntopic
     */
   private def updateTopicSingleDocument(Ptd : ProbVector, tf: MutHashMap[Int,Int]) : ProbVector = {
     val newPtd = ProbVector(new Array[Double](ntopics))
-    for ((w,f) <- tf) newPtd += (Pwt(w) * Ptd).normalize(f)
-    newPtd.normalize
+    var isVaild = false
+    for ((w,f) <- tf) if (Pwt.contains(w)) {
+      newPtd += (Pwt(w) * Ptd).normalize(f)
+      isVaild = true
+    }
+    if (isVaild) newPtd.normalize
+    else  newPtd
   }
 
   /** One iteration to compute updates for word distributions from single document
@@ -52,7 +56,7 @@ class TopicModel (vocabulary: Set[Int], collection: Set[FeatureDocument], ntopic
     */
   def updateWordSingleDocument (ptd: ProbVector, tf: MutHashMap[Int,Int]) : MutHashMap[Int,ProbVector] = {
     val result = MutHashMap[Int,ProbVector]()
-    for ((w,f) <- tf) result += w -> (Pwt(w) * ptd).normalize(f)
+    for ((w,f) <- tf) if (Pwt.contains(w)) result += w -> (Pwt(w) * ptd).normalize(f)
     result
   }
 
@@ -79,15 +83,17 @@ class TopicModel (vocabulary: Set[Int], collection: Set[FeatureDocument], ntopic
     *
     * @param n_iter
     */
-  def learn(n_iter: Int = 20) = for (i <- 0 until n_iter) update
+  def learn(n_iter: Int = 20) = for (i <- 0 until n_iter) {
+    update
+    println("Updated: "+ i)
+  }
 
 
   /**
     * Compute P(w|d) = \sum_t=1->T P(w|t)*P(t|d)
     */
   def wordProb(w: Int, doc: FeatureDocument): Double = {
-    val zeroVector = new ProbVector(new Array[Double](ntopics))
-    (Pwt.getOrElse(w, zeroVector)*Ptd(doc)).arr.sum
+    if (Pwt.contains(w)) (Pwt(w)*Ptd(doc)).arr.sum else 0.0
   }
 }
 
@@ -100,18 +106,17 @@ object TopicModel {
       "france" -> (3,1),"eth" -> (4,1),
       "computer" -> (5,1),"science" -> (6,1))
     val ntopics = 2
-    val doc0       = new FeatureDocument(0, "doc_0", tf(tokenWasher("usa france airbus"), vocabulary))
-    val doc1       = new FeatureDocument(1, "doc_1", tf(tokenWasher("eth computer science"), vocabulary))
-    val doc2       = new FeatureDocument(2, "doc_2", tf(tokenWasher("airbus eth france science"),vocabulary))
+    val doc0       = new FeatureDocument(0, "doc_0", tf(tokenWasher("usa france airbus", false), vocabulary))
+    val doc1       = new FeatureDocument(1, "doc_1", tf(tokenWasher("eth computer science", false), vocabulary))
+    val doc2       = new FeatureDocument(2, "doc_2", tf(tokenWasher("airbus eth france science", false),vocabulary))
     val collection = Set(doc0, doc1, doc2)
-    val model      = new TopicModel(vocabulary.map(_._2._1).toSet, collection, ntopics)
+    val model      = new TopicModel(vocabulary.map(_._2._1).toSet.take(5), collection, ntopics)
 
 
     var count = 0.0
     model.learn(100)
     model.Pwt.foreach{ case (w,a) => println(w + ": " + a.mkString(" ")) }
     model.Ptd.foreach{ case (d, t) => println(d.ID + ": " + t.mkString(" "))}
-
   }
 }
 

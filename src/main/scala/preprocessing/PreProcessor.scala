@@ -1,7 +1,7 @@
 package preprocessing
 
 import java.io.{BufferedWriter, File, FileWriter}
-
+import scala.math.log
 import ch.ethz.dal.tinyir.processing.Document
 import com.github.aztek.porterstemmer.PorterStemmer
 
@@ -26,7 +26,7 @@ import TermFeature._
 
 object PreProcessor {
 
-  val ExceptionWords: List[String] = List("U.S.")
+  val ExceptionWords: List[String] = List("U.S.", "1988")
   val ReplaceWords: Map[String, List[String]] = Map("presidentialcampaign" -> List("presidential", "campaign"))
 
   /** Add more rules of split
@@ -46,9 +46,10 @@ object PreProcessor {
     *   for further operations
     *
     * @param content
+    * @param stemmer
     * @return
     */
-  def tokenWasher(content: String): List[String] = {
+  def tokenWasher(content: String, stemmer: Boolean = true): List[String] = {
     val tokens = tokenize(content)
     // remove stop words and non-alphabetical words from a list of strings
     val Tokens = StopWords.filterOutSW(tokens)
@@ -56,7 +57,7 @@ object PreProcessor {
     ExceptionWords.foreach{ word =>
       if (content.contains(word)) Tokens += word
     }
-    tokenWasher(Tokens.toList)
+    tokenWasher(Tokens.toList, stemmer)
   }
 
   /** In additional to tokenWasher(content), filter words contained in dictionary
@@ -77,7 +78,7 @@ object PreProcessor {
     * @param tokens
     * @return
     */
-  private def tokenWasher(tokens: List[String], stemmer: Boolean = true): List[String] = {
+  private def tokenWasher(tokens: List[String], stemmer: Boolean): List[String] = {
 //    // remove stop words and non-alphabetical words from a list of strings
 //    val Tokens = StopWords.filterOutSW(tokens)
 //              .filter(s => s.map(c => c.isLetter).reduce(_ && _)).toBuffer
@@ -157,7 +158,7 @@ object PreProcessor {
         // fill docs
         val prunedTokens = tokenWasher(doc.content, TokenMap)
         val prunedTitle = tokenWasher(doc.title, TokenMap)
-        docs += docID -> new FeatureDocument(docID, doc.name, tf(prunedTokens, TokenMap), if (prunedTitle.isEmpty) List(-1) else prunedTitle.map(string2Id(_, TokenMap)))
+        docs += docID -> new FeatureDocument(docID, doc.name, tf(prunedTokens++prunedTitle, TokenMap), if (prunedTitle.isEmpty) List(-1) else prunedTitle.map(string2Id(_, TokenMap)))
         // fill postings
         for (token <- prunedTokens ++ prunedTitle) {
           val termID = string2Id(token, TokenMap)
@@ -199,6 +200,23 @@ object PreProcessor {
   def string2Id(str: String, TokenMap: HMap[String, (Int, Int)]): Int = {
     if (TokenMap.contains(str)) TokenMap(str)._1
     else -1
+  }
+
+  /** Prune vocabulary
+    *
+    * @param TokenMap
+    * @param postings
+    * @param docs
+    * @param n
+    */
+  def vocabularyPruner(TokenMap: HMap[String, (Int, Int)],
+                       postings: HMap[Int, List[Int]],
+                       docs: Set[FeatureDocument],
+                       n: Int = 10000,
+                       mustKeptWords: List[Int] = List()) = {
+    val nDocs = docs.size
+    val vocabulary = TokenMap.map(item => (item._1, (item._2._1, log(1 + item._2._2) * log(nDocs.toDouble / postings(item._2._1).length)))).toList.sortWith(_._2._2 > _._2._2).take(n).map(_._2._1)
+    if (mustKeptWords.isEmpty) vocabulary.toSet else (vocabulary ++ mustKeptWords).toSet
   }
 
   /** Save resulting tokenmap
@@ -367,6 +385,7 @@ object PreProcessor {
       val result = getPostingsAndDocs(It_2, TokenMap, ST)
       val postings = result._1
       val docs = result._2
+
       println(postings.take(10))
       println(docs.take(10))
       ST.PrintAll()

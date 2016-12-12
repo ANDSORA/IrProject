@@ -5,6 +5,7 @@ import io.{MyCSVReader, MyTipsterStream}
 import postprocessing.Postprocessor
 import preprocessing.{FeatureDocument, PreProcessor, Query}
 import preprocessing.TermFeature._
+import utility.ListProcesser._
 import utility.{Stater, WordProber}
 
 import scala.collection.mutable.{HashMap => HMap}
@@ -38,7 +39,10 @@ class VectorSpaceModel(val postings: HMap[Int, List[Int]], val docs: HMap[Int, F
 
     // get the doc set to compute with
     //val docSet = DocumentSearcher(postings, docs).SearchDocuments(q, 1000).map(doc => doc.ID).toList
-    val docSet = docs.values.map(doc => doc.ID).toList
+    val docSet = q.content.map(postings.getOrElse(_, List())).filter(!_.isEmpty).sortBy(_.length)
+      .reduceLeft((a, b) => sortedListUnion(a, b))
+    println("(vector space model) docSet.size == " + docSet.length)
+    //val docSet = docs.values.map(doc => doc.ID).toList
 
     // return the best nRetrieval ones
     val ranked = docSet.map(docID => (docs(docID).name, cos(docID, qVec))).sortBy(- _._2).take(nRetrieval)

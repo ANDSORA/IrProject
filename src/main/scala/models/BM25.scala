@@ -7,13 +7,13 @@ import scala.collection.mutable.{HashMap => MutHashMap, PriorityQueue, HashSet}
 import scala.math._
 
 /** BM25 model
-  * k: [1.2, 2.0]; b = 0.75
+  * k: [1.2, 2.0]; b = [0, 1]
   *
   * @param postings
   * @param collection
   */
 class BM25(postings: MutHashMap[Int, List[Int]], collection: Set[FeatureDocument],
-           k: Double = 1.6, b: Double = 0.75) {
+           k: Double = 0.4, b: Double = 0.5) {
 
   val collectionSize = collection.size
   /** Average document length
@@ -52,7 +52,7 @@ class BM25(postings: MutHashMap[Int, List[Int]], collection: Set[FeatureDocument
     * @return
     */
 
-  def rankDocuments(q: Query, n: Int = 1000) = {
+  def rankDocuments(q: Query, n: Int = 1000): List[FeatureDocument] = {
     val nRetrieval = min(n, collection.size)
     collection.map(item => (singleScore(q, item), item)).toList.sortWith(_._1 > _._1).map(_._2).take(nRetrieval)
   }
