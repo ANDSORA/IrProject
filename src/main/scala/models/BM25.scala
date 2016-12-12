@@ -48,13 +48,14 @@ class BM25(postings: MutHashMap[Int, List[Int]], collection: Set[FeatureDocument
   /** Rank documents
     *
     * @param q
+    * @param docs
     * @param n
     * @return
     */
 
-  def rankDocuments(q: Query, n: Int = 1000): List[FeatureDocument] = {
+  def rankDocuments(q: Query, docs: Set[FeatureDocument], n: Int = 1000): List[FeatureDocument] = {
     val nRetrieval = min(n, collection.size)
-    collection.map(item => (singleScore(q, item), item)).toList.sortWith(_._1 > _._1).map(_._2).take(nRetrieval)
+    docs.map(item => (singleScore(q, item), item)).toList.sortWith(_._1 > _._1).map(_._2).take(nRetrieval)
   }
 }
 

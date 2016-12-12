@@ -35,12 +35,13 @@ class LanguageModel(TokenMap: MutHashMap[String, (Int, Int)],
   /** Rank documents
     *
     * @param q
+    * @param docs
     * @param n
     * @return
     */
-  def rankDocuments(q: Query, n: Int = 100): List[FeatureDocument] = {
+  def rankDocuments(q: Query, docs: Set[FeatureDocument], n: Int = 100): List[FeatureDocument] = {
     val nRetrieval = min(n, collection.size)
-    collection.map(item => (singleScore(q, item), item)).toList.sortWith(_._1 > _._1).map(_._2).take(nRetrieval)
+    docs.map(item => (singleScore(q, item), item)).toList.sortWith(_._1 > _._1).map(_._2).take(nRetrieval)
   }
 }
 
@@ -58,6 +59,6 @@ object LanguageModel {
     val collection = MutHashMap(1 -> doc1, 2 -> doc2, 3 -> doc3)
     val model = new LanguageModel(vocabulary, postings, collection.values.toSet, 2, 1, 20)
     val query = Query(0, List(1,2))
-    println(model.rankDocuments(query))
+    println(model.rankDocuments(query, collection.values.toSet))
   }
 }
