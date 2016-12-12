@@ -25,7 +25,7 @@ case class DocumentSearcher(val postings: MutHashMap[Int, List[Int]], val docs: 
   /** Return related documents which contains at least one word of query
     *
     * @param q
-    */
+    *
   def naiveSearchDocuments(q: Query): Set[FeatureDocument] = {
     val relatedDocuments = mutable.HashSet[FeatureDocument]()
     q.content.foreach{w =>
@@ -33,10 +33,19 @@ case class DocumentSearcher(val postings: MutHashMap[Int, List[Int]], val docs: 
     }
     relatedDocuments.toSet
   }
+  */
 
-  def newNaiveSearchDocuments(q: Query): Set[FeatureDocument] = {
+  def searchDocumentsWithInvertedIndex(q: Query): Set[FeatureDocument] = {
     q.content.map(postings.getOrElse(_, List())).filter(!_.isEmpty).sortBy(_.length)
-      .reduceLeft((a, b) => sortedListUnion(a, b)).map(a => docs(a)).toSet
+      .reduceLeft((a, b) => sortedArrayUnion(a.toArray, b.toArray)).map(a => docs(a)).toSet
+  }
+
+  def searchDocumentsBrutely(q: Query): Set[FeatureDocument] = {
+    val ss = mutable.Set[FeatureDocument]()
+    for (doc <- docs.values) {
+      if (q.content.map(a => doc.tf.contains(a)).reduceLeft((a,b) => a || b)) ss += doc
+    }
+    ss.toSet
   }
 
   /** Return documents based on td-idf
@@ -76,7 +85,7 @@ case class DocumentSearcher(val postings: MutHashMap[Int, List[Int]], val docs: 
   }
 }
 
-object DocumentSearcher extends App {
+object DocumentSearcher {
   /**
   val ST = new Stater(new StopWatch, Runtime.getRuntime)
   ST.start()
@@ -92,17 +101,20 @@ object DocumentSearcher extends App {
   println(preprocessedQueries.head)
   println(DocumentSearcher(postings, docs).naiveSearchDocuments(preprocessedQueries.head))
     */
-  val vocabulary = MutHashMap("airbus" -> (1,1),"usa" -> (2,1),
-    "france" -> (3,1),"eth" -> (4,1),
-    "computer" -> (5,1),"science" -> (6,1))
-  val postings = MutHashMap(1 -> List(1,3), 2 -> List(1), 3 -> List(1, 3),
-    4 -> List(2, 3), 5 -> List(2), 6 -> List(2, 3))
-  val ntopics = 2
-  val doc1       = new FeatureDocument(1, "doc_1", tf(tokenWasher("usa france airbus"), vocabulary))
-  val doc2       = new FeatureDocument(2, "doc_2", tf(tokenWasher("eth computer science"), vocabulary))
-  val doc3       = new FeatureDocument(3, "doc_3", tf(tokenWasher("airbus eth france science"),vocabulary))
-  val collection = MutHashMap(1 -> doc1, 2 -> doc2, 3 -> doc3)
-  val ds = DocumentSearcher(postings, collection)
-  val query = Query(0, List(1,2))
-  println(ds.SearchDocuments(query, 3))
+
+  def main(args: Array[String]): Unit = {
+    val vocabulary = MutHashMap("airbus" -> (1,1),"usa" -> (2,1),
+      "france" -> (3,1),"eth" -> (4,1),
+      "computer" -> (5,1),"science" -> (6,1))
+    val postings = MutHashMap(1 -> List(1,3), 2 -> List(1), 3 -> List(1, 3),
+      4 -> List(2, 3), 5 -> List(2), 6 -> List(2, 3))
+    val ntopics = 2
+    val doc1       = new FeatureDocument(1, "doc_1", tf(tokenWasher("usa france airbus"), vocabulary))
+    val doc2       = new FeatureDocument(2, "doc_2", tf(tokenWasher("eth computer science"), vocabulary))
+    val doc3       = new FeatureDocument(3, "doc_3", tf(tokenWasher("airbus eth france science"),vocabulary))
+    val collection = MutHashMap(1 -> doc1, 2 -> doc2, 3 -> doc3)
+    val ds = DocumentSearcher(postings, collection)
+    val query = Query(0, List(1,2))
+    println(ds.SearchDocuments(query, 3))
+  }
 }

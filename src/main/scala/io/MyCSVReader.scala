@@ -61,7 +61,7 @@ object MyCSVReader {
     val preprocessedQueries = queries.map(elem => new Query(elem._1,
       PreProcessor.tokenWasher(elem._2, TokenMap).map(PreProcessor.string2Id(_, TokenMap)))).take(2)
     val query = preprocessedQueries.tail.head
-    val collection = DocumentSearcher(postings, docs).naiveSearchDocuments(query)
+    val collection = DocumentSearcher(postings, docs).searchDocumentsBrutely(query)
     println(collection.size)
   }
 }
