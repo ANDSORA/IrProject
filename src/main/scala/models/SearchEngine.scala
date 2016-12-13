@@ -1,11 +1,12 @@
+package models
+
 import java.io.File
 
-import preprocessing.{FeatureDocument, PreProcessor, Query}
 import ch.ethz.dal.tinyir.util.StopWatch
-import io.{MyCSVReader, MyTipsterStream}
-import models._
+import io.MyCSVReader
 import postprocessing.Postprocessor
-import utility.{Stater, WordProber}
+import preprocessing.{FeatureDocument, PreProcessor, Query}
+import utility.Stater
 
 import scala.collection.mutable.{ListBuffer, HashMap => MutHashMap}
 
@@ -48,13 +49,15 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
       val docIndices = ds.searchDocumentsWithInvertedIndex(query)
       val docs = docIndices.map(collection(_))
       val retrievedDocuments = model.rankDocuments(query, docs, nRetrieval)
-      output ++= Postprocessor.outputRanking(query, retrievedDocuments.map(_.name)) // output of top documents
       if (relevJudgement.contains(query.id)) {
         val score = Postprocessor.APScore(retrievedDocuments.map(_.name), relevJudgement(query.id))
         scores += score
         println(query.id + ": " + "AP -> " + score + " " + "(P, R, F1) -> " + Postprocessor.f1Score(retrievedDocuments.map(_.name), relevJudgement(query.id)))
       }
-      else println(query.id)
+      else {
+        output ++= Postprocessor.outputRanking(query, retrievedDocuments.map(_.name)) // output of top documents
+        println(query.id)
+      }
       counter += 1
     }
     ST.PrintAll()
@@ -75,13 +78,15 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
       val docIndices = ds.searchDocumentsBrutely(query, true)//ds.searchDocumentsWithInvertedIndex(query, true)
       val docs = docIndices.map(collection(_))
       val retrievedDocuments = model.rankDocuments(query, docs, nRetrieval)
-      output ++= Postprocessor.outputRanking(query, retrievedDocuments.map(_.name)) // output of top documents
       if (relevJudgement.contains(query.id)) {
         val score = Postprocessor.APScore(retrievedDocuments.map(_.name), relevJudgement(query.id))
         scores += score
         println(query.id + ": " + "AP -> " + score + " " + "(P, R, F1) -> " + Postprocessor.f1Score(retrievedDocuments.map(_.name), relevJudgement(query.id)))
       }
-      else println(query.id)
+      else {
+        output ++= Postprocessor.outputRanking(query, retrievedDocuments.map(_.name)) // output of top documents
+        println(query.id)
+      }
       counter += 1
     }
     val result = preprocessedQueries.map(_.id).zip(scores)
@@ -98,16 +103,18 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
     var counter = 1
     val output = ListBuffer[(Int, Int, String)]()
     for (query <- preprocessedQueries) {
-      val docIndices = ds.searchDocumentsWithInvertedIndex(query, true)
+      val docIndices = ds.searchDocumentsWithInvertedIndex(query)
       val docs = docIndices.map(collection(_))
       val retrievedDocuments = model.rankDocuments(query, docs, nRetrieval)
-      output ++= Postprocessor.outputRanking(query, retrievedDocuments.map(_.name)) // output of top documents
       if (relevJudgement.contains(query.id)) {
         val score = Postprocessor.APScore(retrievedDocuments.map(_.name), relevJudgement(query.id))
         scores += score
         println(query.id + ": " + "AP -> " + score + " " + "(P, R, F1) -> " + Postprocessor.f1Score(retrievedDocuments.map(_.name), relevJudgement(query.id)))
       }
-      else println(query.id)
+      else {
+        output ++= Postprocessor.outputRanking(query, retrievedDocuments.map(_.name)) // output of top documents
+        println(query.id)
+      }
       counter += 1
     }
     val result = preprocessedQueries.map(_.id).zip(scores)
@@ -129,14 +136,16 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
       //val docs = ds.searchDocumentsWithInvertedIndex(q)
       //println("picked num: " + docs.size)
       val retrive = VecModel.rankDocuments(q)
-      output ++= Postprocessor.outputRanking(q, retrive) // output of top documents
       if (relevJudgement.contains(q.id)) {
         val score = Postprocessor.APScore(retrive, relevJudgement(q.id))
         println(q.id + ": " + "AP -> " + score + " " + "(P, R, F1) -> " + Postprocessor.f1Score(retrive, relevJudgement(q.id)))
         //println("The true num is: " + relevJudgement(q.id).size)
         scores += score
       }
-      else println(q.id)
+      else {
+        output ++= Postprocessor.outputRanking(q, retrive)
+        println(q.id)
+      }
       //ST.PrintAll()
     }
     val result = preprocessedQueries.map(_.id).zip(scores)
@@ -171,14 +180,14 @@ object SearchEngine {
     val queries = MyCSVReader.loadQuery("data/questions-descriptions.txt")
     val test = MyCSVReader.loadQuery("data/test-questions.txt")
     ST.start()
-    val se = SearchEngine(TokenMap, postings, docs, relevJudgement, queries)
+    val se = SearchEngine(TokenMap, postings, docs, relevJudgement, queries ++ test)
     ST.PrintAll()
 
-    val Tuple3(score, _, output) = se.tfidfModel(100)
+//    val Tuple3(score, _, output) = se.tfidfModel(100)
 //    val Tuple3(score, _, output) = se.bm25Model(100, 0.4, 0.5)
 //    val Tuple3(score, _, output) = se.languageModel(100)
-//    val Tuple3(score, _, output) = se.vectorSpaceModel(100)
-//    val Tuple3(score, _, output) = se.vectorSpaceModel(100)
+    val Tuple3(score, _, output) = se.vectorSpaceModel(100)
+
     ST.PrintAll()
     println(score)
     Postprocessor.writeRankingToFile("data/ranking-t-17-tfidf.run", output) // ranking-[t|l]-[groupid].run

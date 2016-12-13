@@ -1,7 +1,13 @@
 package models
 
+import java.io.File
+
+import ch.ethz.dal.tinyir.util.StopWatch
+import io.MyCSVReader
+import postprocessing.Postprocessor
 import preprocessing.{FeatureDocument, PreProcessor, Query}
-import utility.WordProber
+import utility.{Stater, WordProber}
+
 import scala.collection.mutable.{HashMap => MutHashMap}
 import scala.math._
 import preprocessing.TermFeature.tf
@@ -47,6 +53,7 @@ class LanguageModel(TokenMap: MutHashMap[String, (Int, Int)],
 
 object LanguageModel {
   def main(args: Array[String]): Unit = {
+    /*
     val vocabulary = MutHashMap("airbus" -> (1,1),"usa" -> (2,1),
       "france" -> (3,1),"eth" -> (4,1),
       "computer" -> (5,1),"science" -> (6,1))
@@ -60,5 +67,35 @@ object LanguageModel {
     val model = new LanguageModel(vocabulary, postings, collection.values.toSet, 2, 1, 20)
     val query = Query(0, List(1,2))
     println(model.rankDocuments(query, collection.values.toSet))
+    */
+    println("Hello, IrProject.")
+    val ST = new Stater(new StopWatch, Runtime.getRuntime)
+    ST.start()
+    // Create data directory
+    new File("data").mkdir()
+    // Load dictionary, postings, and documents
+
+    //    val otherDir = "data/filter-1/"
+    val otherDir = "data/"
+    val TokenMap = PreProcessor.loadTokenMap(otherDir+ "tokenmap.txt")
+    ST.PrintAll()
+    val postings = PreProcessor.loadPostings(otherDir + "postings.txt")
+    ST.PrintAll()
+    val docs = PreProcessor.loadDocs(otherDir + "docs.txt")
+    ST.PrintAll()
+    // Load queries and judgement
+    val relevJudgement = MyCSVReader.loadRelevJudgement("data/relevance-judgements.csv")
+    val queries = MyCSVReader.loadQuery("data/questions-descriptions.txt")
+    val test = MyCSVReader.loadQuery("data/test-questions.txt")
+    ST.start()
+    val se = SearchEngine(TokenMap, postings, docs, relevJudgement, queries ++ test)
+    ST.PrintAll()
+
+    println("Here we run the Language model.")
+    val Tuple3(score, _, output) = se.languageModel(100)
+
+    ST.PrintAll()
+    println(score)
+    Postprocessor.writeRankingToFile("data/ranking-l-17.run", output) // ranking-[t|l]-[groupid].run
   }
 }

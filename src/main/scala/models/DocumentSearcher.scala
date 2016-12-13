@@ -79,12 +79,12 @@ case class DocumentSearcher(val postings: MutHashMap[Int, List[Int]], val docs: 
     def compare(item: Tuple2[Double, Int]) = item._1
 
     val pq = collection.mutable.PriorityQueue[(Double, Int)]()(Ordering.by(compare))
-    for (item <- docs) {
-      if (IsTfIdf == true) pq += tfidfQueryTuple(q, item._2, docs.size)
-      else pq += atfidfQueryTuple(q, item._2, docs.size)
+    for (docID <- searchDocumentsBrutely(q, true)) {
+      if (IsTfIdf == true) pq += tfidfQueryTuple(q, docs(docID), docs.size)
+      else pq += atfidfQueryTuple(q, docs(docID), docs.size)
     }
     val relatedDocuments = mutable.HashSet[Int]()
-    for (i <- 1 to n) {
+    for (i <- 1 to scala.math.min(n, pq.length)) {
       relatedDocuments += pq.dequeue()._2
     }
     relatedDocuments.toSet

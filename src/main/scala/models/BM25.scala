@@ -1,9 +1,15 @@
 package models
 
-import preprocessing.PreProcessor._
-import preprocessing.{FeatureDocument, Query}
+import java.io.File
 
-import scala.collection.mutable.{HashMap => MutHashMap, PriorityQueue, HashSet}
+import ch.ethz.dal.tinyir.util.StopWatch
+import io.MyCSVReader
+import postprocessing.Postprocessor
+import preprocessing.PreProcessor._
+import preprocessing.{FeatureDocument, PreProcessor, Query}
+import utility.Stater
+
+import scala.collection.mutable.{HashSet, PriorityQueue, HashMap => MutHashMap}
 import scala.math._
 
 /** BM25 model
@@ -59,8 +65,9 @@ class BM25(postings: MutHashMap[Int, List[Int]], collection: Set[FeatureDocument
   }
 }
 
-object BM25 extends App {
-  /*
+object BM25 {
+  def main(args: Array[String]): Unit = {
+    /*
   val vocabulary = MutHashMap("airbus" -> (1,1),"usa" -> (2,1),
     "france" -> (3,1),"eth" -> (4,1),
     "computer" -> (5,1),"science" -> (6,1))
@@ -75,4 +82,36 @@ object BM25 extends App {
   val query = Query(0, List(1,2))
   println(bm25.rankDocuments(query))
   */
+
+    println("Hello, IrProject.")
+    val ST = new Stater(new StopWatch, Runtime.getRuntime)
+    ST.start()
+    // Create data directory
+    new File("data").mkdir()
+    // Load dictionary, postings, and documents
+
+    //    val otherDir = "data/filter-1/"
+    val otherDir = "data/"
+    val TokenMap = PreProcessor.loadTokenMap(otherDir+ "tokenmap.txt")
+    ST.PrintAll()
+    val postings = PreProcessor.loadPostings(otherDir + "postings.txt")
+    ST.PrintAll()
+    val docs = PreProcessor.loadDocs(otherDir + "docs.txt")
+    ST.PrintAll()
+    // Load queries and judgement
+    val relevJudgement = MyCSVReader.loadRelevJudgement("data/relevance-judgements.csv")
+    val queries = MyCSVReader.loadQuery("data/questions-descriptions.txt")
+    val test = MyCSVReader.loadQuery("data/test-questions.txt")
+    ST.start()
+    val se = SearchEngine(TokenMap, postings, docs, relevJudgement, queries ++ test)
+    ST.PrintAll()
+
+    println("Here we run the BM25 model")
+    val Tuple3(score, _, output) = se.bm25Model(100, 0.4, 0.5)
+
+    ST.PrintAll()
+    println(score)
+    Postprocessor.writeRankingToFile("data/ranking-t-17.run", output) // ranking-[t|l]-[groupid].run
+  }
+
 }

@@ -56,7 +56,7 @@ object ListProcesser {
     var idx2 = 0
     while (idx1 < A1.length && idx2 < A2.length) {
       val t1 = A1(idx1)
-      var t2 = A2(idx2)
+      val t2 = A2(idx2)
       if (t1 < t2) {idx1 += 1}
       else if (t1 > t2) {idx2 += 1}
       else {idx1 += 1; idx2 += 1; LB += t1}

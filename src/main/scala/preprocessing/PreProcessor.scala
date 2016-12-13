@@ -396,9 +396,9 @@ object PreProcessor {
       println(docs.take(10))
       ST.PrintAll()
 
-      saveDocs("data/filter-1/docs.txt", docs)
-      saveTokenMap("data/filter-1/tokenmap.txt", TokenMap)
-      savePostings("data/filter-1/postings.txt", postings)
+      saveDocs("data/docs.txt", docs)
+      saveTokenMap("data/tokenmap.txt", TokenMap)
+      savePostings("data/postings.txt", postings)
       println("Preprocessing Work Done.")
       ST.PrintAll()
     }

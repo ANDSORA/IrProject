@@ -39,7 +39,7 @@ object Starter extends App {
   val queries = MyCSVReader.loadQuery("data/questions-descriptions.txt")
   val test = MyCSVReader.loadQuery("data/test-questions.txt")
 
-  //val se = SearchEngine(TokenMap, postings, docs, relevJudgement, queries)
+  //val se = models.SearchEngine(TokenMap, postings, docs, relevJudgement, queries)
   ST.PrintAll()
   println("All preparation work are done.")
 
