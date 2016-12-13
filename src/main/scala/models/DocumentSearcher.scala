@@ -57,7 +57,7 @@ case class DocumentSearcher(val postings: MutHashMap[Int, List[Int]], val docs: 
     (q.content.map(termID => atfidf(ATFs.getOrElse(termID, 0.5), postings(termID).length, collectionSize)).sum, d.ID)
   }
 
-  def SearchDocuments(q: Query, n: Int = 1000, IsTfIdf: Boolean = true): Set[Int] = {
+  def searchDocumentsWithTFIDFmodel(q: Query, n: Int = 1000, IsTfIdf: Boolean = true): Set[Int] = {
     /** Helper function to define ordering
       *
       * @param item

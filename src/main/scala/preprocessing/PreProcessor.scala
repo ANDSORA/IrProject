@@ -138,11 +138,11 @@ object PreProcessor {
     * @param ST
     */
   def getPostingsAndDocs(it: Iterator[Document], TokenMap: HMap[String, (Int, Int)],
-                         ST: Stater): Tuple2[HMap[Int, ListBuffer[Int]], HMap[Int, FeatureDocument]] = {
+                         ST: Stater): Tuple2[HMap[Int, List[Int]], HMap[Int, FeatureDocument]] = {
     var docID = 0
     var times = 0
-    var postings = HMap[Int, ListBuffer[Int]]()
-    var docs = HMap[Int, FeatureDocument]()
+    val postings = HMap[Int, ListBuffer[Int]]()
+    val docs = HMap[Int, FeatureDocument]()
     for (doc <- it) {
       // print the memory usage and time
       if ({times += 1; times} % 100 == 0) {
@@ -167,7 +167,13 @@ object PreProcessor {
         }
       }
     }
-    (postings, docs)
+
+    val postingsRet = HMap[Int, List[Int]]()
+    for (item <- postings) {
+      postingsRet += item._1 -> item._2.toList
+    }
+
+    (postingsRet, docs)
   }
 
   /** Iterate the whole document and create a mutable hashmap
@@ -240,7 +246,7 @@ object PreProcessor {
     *
     * @param postings
     */
-  def savePostings(dir: String, postings: HMap[Int, ListBuffer[Int]]) = {
+  def savePostings(dir: String, postings: HMap[Int, List[Int]]) = {
     val file = new File(dir)
     val bw = new BufferedWriter(new FileWriter(file))
     // Write postins
