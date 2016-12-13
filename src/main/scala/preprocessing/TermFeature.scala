@@ -17,6 +17,15 @@ object TermFeature {
     mm
   }
 
+  def tf(tokens: List[Int]): HMap[Int, Int] = {
+    val mm = HMap[Int, Int]()
+    for (tokenID <- tokens) {
+      if (!mm.contains(tokenID)) mm += tokenID -> 1
+      else mm(tokenID) += 1
+    }
+    mm
+  }
+
   def atf(tokens: List[String], TokenMap: HMap[String, (Int, Int)]): HMap[Int, Double] = {
     atf(tf(tokens, TokenMap))
   }

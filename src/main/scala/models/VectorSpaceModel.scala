@@ -33,26 +33,20 @@ class VectorSpaceModel(val postings: HMap[Int, List[Int]], val collection: HMap[
   /** Rank documents
     *
     * @param q
-    * @param docs: documents to be ranked
     * @param nRetrieval
     * @return
     */
-  def rankDocuments(q: Query, docs: Set[Int], nRetrieval: Int = 100): List[String] = {
+  def rankDocuments(q: Query, nRetrieval: Int = 100): List[String] = {
     // construct the query vector, simple way
-    val qVec = HMap[Int, Double]()
-    for (termID <- q.content) {
-     if (!qVec.contains(termID)) qVec += termID -> 1.0
-    }
+    val qVec = normalize(tfidf(tf(q.content), postings, collection.size))
 
-    // get the doc set to compute with
-    /*
-    val docSet = q.content.map(postings.getOrElse(_, List())).filter(!_.isEmpty).sortBy(_.length)
-      .reduceLeft((a, b) => sortedArrayUnion(a.toArray, b.toArray))
-    println("(vector space model) docSet.size == " + docSet.length)
-    */
+    // get the docSet
+    //val docSet = DocumentSearcher(postings, collection).searchDocumentsWithInvertedIndex(q) // pure model
+    val docSet = DocumentSearcher(postings, collection).SearchDocuments(q, 180)
 
-    // return the best nRetrieval ones
-    docs.map(d => (collection(d).name, cos(d, qVec))).toList.sortBy(- _._2).map(_._1).take(nRetrieval)
+    // do the job of vector space model
+    docSet.map(d => (collection(d).name, cos(d, qVec))).toList.sortBy(- _._2).map(_._1).take(nRetrieval)
+    //docSet.map(docID => collection(docID).name).toList
   }
 
   private def normalize(vec: HMap[Int, Double]): HMap[Int, Double] = {

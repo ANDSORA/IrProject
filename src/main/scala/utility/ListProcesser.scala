@@ -50,6 +50,20 @@ object ListProcesser {
     LB.toList
   }
 
+  def sortedArrayIntersect(A1: Array[Int], A2: Array[Int]): List[Int] = {
+    val LB = ListBuffer[Int]()
+    var idx1 = 0
+    var idx2 = 0
+    while (idx1 < A1.length && idx2 < A2.length) {
+      val t1 = A1(idx1)
+      var t2 = A2(idx2)
+      if (t1 < t2) {idx1 += 1}
+      else if (t1 > t2) {idx2 += 1}
+      else {idx1 += 1; idx2 += 1; LB += t1}
+    }
+    LB.toList
+  }
+
   def main(args: Array[String]): Unit = {
     val L1 = List(1, 3, 5, 7)
     val L2 = List(2, 3, 6, 7, 8)

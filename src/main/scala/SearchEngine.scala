@@ -123,9 +123,9 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
     val scores = ListBuffer[Double]()
     val output = ListBuffer[(Int, Int, String)]()
     for (q <- preprocessedQueries) {
-      val docs = ds.searchDocumentsWithInvertedIndex(q)
+      //val docs = ds.searchDocumentsWithInvertedIndex(q)
       //println("picked num: " + docs.size)
-      val retrive = VecModel.rankDocuments(q, docs)
+      val retrive = VecModel.rankDocuments(q)
       output ++= Postprocessor.outputRanking(q, retrive) // output of top documents
       if (relevJudgement.contains(q.id)) {
         val score = Postprocessor.APScore(retrive, relevJudgement(q.id))
@@ -155,7 +155,7 @@ object SearchEngine {
     new File("data").mkdir()
     // Load dictionary, postings, and documents
 
-    val otherDir = "data/filter-10/"
+    val otherDir = "data/filter-1/"
 
     val TokenMap = PreProcessor.loadTokenMap(otherDir+ "tokenmap.txt")
     ST.PrintAll()
