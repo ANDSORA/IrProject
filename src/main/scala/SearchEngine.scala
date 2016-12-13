@@ -72,7 +72,7 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
     var counter = 1
     val output = ListBuffer[(Int, Int, String)]()
     for (query <- preprocessedQueries) {
-      val docIndices = ds.searchDocumentsBrutely(query)//ds.searchDocumentsWithInvertedIndex(query)
+      val docIndices = ds.searchDocumentsBrutely(query, true)//ds.searchDocumentsWithInvertedIndex(query, true)
       val docs = docIndices.map(collection(_))
       val retrievedDocuments = model.rankDocuments(query, docs, nRetrieval)
       output ++= Postprocessor.outputRanking(query, retrievedDocuments.map(_.name)) // output of top documents
@@ -98,7 +98,7 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
     var counter = 1
     val output = ListBuffer[(Int, Int, String)]()
     for (query <- preprocessedQueries) {
-      val docIndices = ds.searchDocumentsWithInvertedIndex(query)
+      val docIndices = ds.searchDocumentsWithInvertedIndex(query, true)
       val docs = docIndices.map(collection(_))
       val retrievedDocuments = model.rankDocuments(query, docs, nRetrieval)
       output ++= Postprocessor.outputRanking(query, retrievedDocuments.map(_.name)) // output of top documents
@@ -125,18 +125,18 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
     println("VecModel Construted Completed!")
     val scores = ListBuffer[Double]()
     val output = ListBuffer[(Int, Int, String)]()
-    for (query <- preprocessedQueries) {
-      val docIndices = ds.searchDocumentsWithInvertedIndex(query)
-      val docs = docIndices.map(collection(_))
-      val retrive = VecModel.rankDocuments(query, docs)
-      output ++= Postprocessor.outputRanking(query, retrive) // output of top documents
-      if (relevJudgement.contains(query.id)) {
-        val score = Postprocessor.APScore(retrive, relevJudgement(query.id))
-        println(query.id + ": " + "AP -> " + score + " " + "(P, R, F1) -> " + Postprocessor.f1Score(retrive, relevJudgement(query.id)))
-        println("The true num is: " + relevJudgement(query.id).size + "\n")
+    for (q <- preprocessedQueries) {
+      //val docs = ds.searchDocumentsWithInvertedIndex(q)
+      //println("picked num: " + docs.size)
+      val retrive = VecModel.rankDocuments(q)
+      output ++= Postprocessor.outputRanking(q, retrive) // output of top documents
+      if (relevJudgement.contains(q.id)) {
+        val score = Postprocessor.APScore(retrive, relevJudgement(q.id))
+        println(q.id + ": " + "AP -> " + score + " " + "(P, R, F1) -> " + Postprocessor.f1Score(retrive, relevJudgement(q.id)))
+        //println("The true num is: " + relevJudgement(q.id).size)
         scores += score
       }
-      else println(query.id)
+      else println(q.id)
       //ST.PrintAll()
     }
     val result = preprocessedQueries.map(_.id).zip(scores)
@@ -157,7 +157,9 @@ object SearchEngine {
     // Create data directory
     new File("data").mkdir()
     // Load dictionary, postings, and documents
-    val otherDir = "data/4/"
+
+//    val otherDir = "data/filter-1/"
+    val otherDir = "data/filter-1/"
     val TokenMap = PreProcessor.loadTokenMap(otherDir+ "tokenmap.txt")
     ST.PrintAll()
     val postings = PreProcessor.loadPostings(otherDir + "postings.txt")
@@ -169,12 +171,14 @@ object SearchEngine {
     val queries = MyCSVReader.loadQuery("data/questions-descriptions.txt")
     val test = MyCSVReader.loadQuery("data/test-questions.txt")
     ST.start()
-    val se = SearchEngine(TokenMap, postings, docs, relevJudgement, queries++test)
+    val se = SearchEngine(TokenMap, postings, docs, relevJudgement, queries)
     ST.PrintAll()
-//    val Tuple3(score, _, output) = se.tfidfModel(100)
+
+    val Tuple3(score, _, output) = se.tfidfModel(100)
 //    val Tuple3(score, _, output) = se.bm25Model(100, 0.4, 0.5)
-    val Tuple3(score, _, output) = se.vectorSpaceModel(100)
 //    val Tuple3(score, _, output) = se.languageModel(100)
+//    val Tuple3(score, _, output) = se.vectorSpaceModel(100)
+//    val Tuple3(score, _, output) = se.vectorSpaceModel(100)
     ST.PrintAll()
     println(score)
     Postprocessor.writeRankingToFile("data/ranking-t-17-tfidf.run", output) // ranking-[t|l]-[groupid].run

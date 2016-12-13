@@ -377,7 +377,7 @@ object PreProcessor {
       val tips = new MyTipsterStream("data/raw")
 
       val It_1 = tips.stream.toIterator
-      val TokenMap = getTokenMap(It_1, 9)
+      val TokenMap = getTokenMap(It_1, 1)
       println("The size of Map = " + TokenMap.size)
       ST.PrintAll()
 
@@ -390,9 +390,9 @@ object PreProcessor {
       println(docs.take(10))
       ST.PrintAll()
 
-      saveDocs("data/filter-9/docs.txt", docs)
-      saveTokenMap("data/filter-9/tokenmap.txt", TokenMap)
-      savePostings("data/filter-9/postings.txt", postings)
+      saveDocs("data/filter-1/docs.txt", docs)
+      saveTokenMap("data/filter-1/tokenmap.txt", TokenMap)
+      savePostings("data/filter-1/postings.txt", postings)
       println("Preprocessing Work Done.")
       ST.PrintAll()
     }

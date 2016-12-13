@@ -18,7 +18,7 @@ import scala.collection.mutable.ListBuffer
 class VectorSpaceModel(val postings: HMap[Int, List[Int]], val collection: HMap[Int, FeatureDocument]) {
   def echo_self(): Unit = println("VectorSpaceModel.")
 
-  //val DocVectors = HMap[Int, HMap[Int, Double]]() // HMap[docID, HMap[termID, tfidf]]
+  private val DocVectors = HMap[Int, HMap[Int, Double]]() // HMap[docID, HMap[termID, tfidf]]
   /*
   val DocVectors: HMap[Int, HMap[Int, Double]] = { // HMap[docID, HMap[termID, tfidf]]
     val mm = HMap[Int, HMap[Int, Double]]()
@@ -33,37 +33,39 @@ class VectorSpaceModel(val postings: HMap[Int, List[Int]], val collection: HMap[
   /** Rank documents
     *
     * @param q
-    * @param docs: documents to be ranked
     * @param nRetrieval
     * @return
     */
-  def rankDocuments(q: Query, docs: Set[FeatureDocument], nRetrieval: Int = 100): List[String] = {
+  def rankDocuments(q: Query, nRetrieval: Int = 100): List[String] = {
     // construct the query vector, simple way
-    val qVec = HMap[Int, Double]()
-    for (termID <- q.content) {
-     if (!qVec.contains(termID)) qVec += termID -> 1.0
-    }
+    val qVec = normalize(tfidf(tf(q.content), postings, collection.size))
 
-    // get the doc set to compute with
-    //val docSet = DocumentSearcher(postings, docs).SearchDocuments(q, 1000).map(doc => doc.ID).toList
-//    val docSet = q.content.map(postings.getOrElse(_, List())).filter(!_.isEmpty).sortBy(_.length)
-//      .reduceLeft((a, b) => sortedListUnion(a, b))
-//    println("(vector space model) docSet.size == " + docSet.length)
-    //val docSet = docs.values.map(doc => doc.ID).toList
+    // get the docSet
+    //val docSet = DocumentSearcher(postings, collection).searchDocumentsWithInvertedIndex(q) // pure model
+    val docSet = DocumentSearcher(postings, collection).SearchDocuments(q, 180)
 
-    // return the best nRetrieval ones
-    val ranked = docs.map(d => (d.name, cos(d, qVec))).toList.sortBy(- _._2).take(nRetrieval)
-//    println("biggest: " + ranked.take(10))
-//    println("smallest: " + ranked.reverse.take(10))
-//    println("average: " + (ranked.map(_._2).sum / ranked.length))
-    ranked.map(_._1)
+    // do the job of vector space model
+    docSet.map(d => (collection(d).name, cos(d, qVec))).toList.sortBy(- _._2).map(_._1).take(nRetrieval)
+    //docSet.map(docID => collection(docID).name).toList
+  }
+
+  private def normalize(vec: HMap[Int, Double]): HMap[Int, Double] = {
+    val ABS = abs(vec)
+    for (key <- vec.keys) vec(key) /= ABS
+    vec
+  }
+
+  //private def cos(docID: Int, vec: HMap[Int, Double]): Double = cos(tfidf(docs(docID).tf, postings, docs.size), vec)
+  private def cos(docID: Int, vec: HMap[Int, Double]): Double = {
+    if (!DocVectors.contains(docID)) DocVectors += docID -> normalize(tfidf(collection(docID).tf, postings, collection.size))
+    cos(DocVectors(docID), vec)
   }
 
   private def cos(d: FeatureDocument, vec: HMap[Int, Double]): Double = cos(tfidf(d.tf, postings, collection.size), vec)
   //private def cos(docID: Int, vec: HMap[Int, Double]): Double = cos(atf(docs(docID).tf), vec)
 
   private def cos(vec1: HMap[Int, Double], vec2: HMap[Int, Double]): Double = {
-    dot(vec1, vec2) / (abs(vec1) * abs(vec2))
+    dot(vec1, vec2)
   }
 
   private def dot(vec1: HMap[Int, Double], vec2: HMap[Int, Double]): Double = {
@@ -76,7 +78,18 @@ class VectorSpaceModel(val postings: HMap[Int, List[Int]], val collection: HMap[
 }
 
 object VectorSpaceModel {
+  def normalize(vec: HMap[Int, Double]): HMap[Int, Double] = {
+    val ABS = abs(vec)
+    for (key <- vec.keys) vec(key) /= ABS
+    vec
+  }
+
+  def abs(vec: HMap[Int, Double]): Double = {
+    sqrt(vec.values.map(v => v*v).sum)
+  }
+
   def main(args: Array[String]): Unit = {
+    /*
     println("Vector Space Model.")
 
     println("Hello, IrProject.")
@@ -115,29 +128,10 @@ object VectorSpaceModel {
     println(preprocessedQueries.map(_.id).zip(scores))
     println("MAP = " + scores.sum / scores.length)
     ST.PrintAll()
-
-    /*
-    // Ranking
-    val scores = ListBuffer[Double]()
-    val ntopics = 40
-    val nInter = 100
-    val vocabulary = TokenMap.map(_._2._1).toSet
-    var counter = 1
-    for (query <- preprocessedQueries) {
-      val collection = DocumentSearcher(postings, docs).tfidfSearchDocuments(query, 1000)
-      val model = new TopicModel(vocabulary, collection, ntopics)
-      model.learn(nInter)
-      val ranker = new PointwiseRanker(query)
-      val ranking = ranker.rankDocs(WordProber.jmSmoothedWordProb(WordProber.naiveWordProb, model.wordProb, 0.1))(collection)
-      //    val ranking = ranker.rankDocs(WordProber.dirichletSmoothedWordProb(model.wordProb, 1))(collection)
-      scores += Postprocessor.APScore(ranking.map(_._1), relevJudgement(query.id))
-      println(counter + "\n")
-      counter += 1
-      ST.PrintAll()
-    }
-    println(preprocessedQueries.map(_.id).zip(scores))
-    println("MAP = " + scores.sum / scores.length)
-    ST.PrintAll()
     */
+
+    val mm = HMap(1 -> 3.0, 2 -> 4.0)
+    println(normalize(mm))
+    println(abs(mm))
   }
 }

@@ -35,56 +35,60 @@ case class DocumentSearcher(val postings: MutHashMap[Int, List[Int]], val docs: 
   }
   */
 
-  def searchDocumentsWithInvertedIndex(q: Query): Set[Int] = {
-    q.content.map(postings.getOrElse(_, List())).filter(!_.isEmpty).sortBy(_.length)
-      .reduceLeft((a, b) => sortedArrayUnion(a.toArray, b.toArray)).map(a => docs(a).ID).toSet
+  def searchDocumentsWithInvertedIndex(q: Query, intersect: Boolean = false): Set[Int] = {
+    if (!intersect) {
+      q.content.map(postings.getOrElse(_, List())).filter(!_.isEmpty).sortBy(_.length)
+        .reduceLeft((a, b) => sortedArrayUnion(a.toArray, b.toArray)).map(a => docs(a).ID).toSet
+    }
+    else {
+      q.content.map(postings.getOrElse(_, List())).filter(!_.isEmpty).sortBy(_.length)
+        .reduceLeft((a, b) => sortedArrayIntersect(a.toArray, b.toArray)).map(a => docs(a).ID).toSet
+    }
   }
 
-  def searchDocumentsBrutely(q: Query): Set[Int] = {
+  def searchDocumentsBrutely(q: Query, intersect: Boolean = false): Set[Int] = {
     val ss = mutable.Set[Int]()
-    for (doc <- docs.values) {
-      if (q.content.map(a => doc.tf.contains(a)).reduceLeft((a,b) => a || b)) ss += doc.ID
+    if (!intersect) {
+      for (doc <- docs.values) {
+        if (q.content.map(a => doc.tf.contains(a)).reduceLeft((a, b) => a || b)) ss += doc.ID
+      }
+    }
+    else {
+      for (doc <- docs.values) {
+        if (q.content.map(a => doc.tf.contains(a)).reduceLeft((a, b) => a && b)) ss += doc.ID
+      }
     }
     ss.toSet
   }
 
-  /*
-  /** Return documents based on td-idf
-    *
-    * @param q
-    * @param d
-    * @param collectionSize
-    * @return
-    */
-  private def tfidfQueryTuple(q: Query, d: FeatureDocument, collectionSize: Int): Tuple2[Double, FeatureDocument] = {
-    (q.content.map(termID => tfidf(d.tf.getOrElse(termID, 0), postings(termID).length, collectionSize)).sum, d)
+  private def tfidfQueryTuple(q: Query, d: FeatureDocument, collectionSize: Int): Tuple2[Double, Int] = {
+    (q.content.map(termID => tfidf(d.tf.getOrElse(termID, 0), postings(termID).length, collectionSize)).sum, d.ID)
   }
 
-  private def atfidfQueryTuple(q: Query, d: FeatureDocument, collectionSize: Int): Tuple2[Double, FeatureDocument] = {
+  private def atfidfQueryTuple(q: Query, d: FeatureDocument, collectionSize: Int): Tuple2[Double, Int] = {
     val ATFs = atf(d.tf)
-    (q.content.map(termID => atfidf(ATFs.getOrElse(termID, 0.5), postings(termID).length, collectionSize)).sum, d)
+    (q.content.map(termID => atfidf(ATFs.getOrElse(termID, 0.5), postings(termID).length, collectionSize)).sum, d.ID)
   }
 
-  def SearchDocuments(q: Query, n: Int = 1000, IsTfIdf: Boolean = true): Set[FeatureDocument] = {
+  def SearchDocuments(q: Query, n: Int = 1000, IsTfIdf: Boolean = true): Set[Int] = {
     /** Helper function to define ordering
       *
       * @param item
       * @return
       */
-    def compare(item: Tuple2[Double, FeatureDocument]) = item._1
+    def compare(item: Tuple2[Double, Int]) = item._1
 
-    val pq = collection.mutable.PriorityQueue[(Double, FeatureDocument)]()(Ordering.by(compare))
+    val pq = collection.mutable.PriorityQueue[(Double, Int)]()(Ordering.by(compare))
     for (item <- docs) {
       if (IsTfIdf == true) pq += tfidfQueryTuple(q, item._2, docs.size)
       else pq += atfidfQueryTuple(q, item._2, docs.size)
     }
-    val relatedDocuments = mutable.HashSet[FeatureDocument]()
+    val relatedDocuments = mutable.HashSet[Int]()
     for (i <- 1 to n) {
       relatedDocuments += pq.dequeue()._2
     }
     relatedDocuments.toSet
   }
-  */
 }
 
 object DocumentSearcher {
