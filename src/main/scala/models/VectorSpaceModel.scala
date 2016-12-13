@@ -36,13 +36,13 @@ class VectorSpaceModel(val postings: HMap[Int, List[Int]], val collection: HMap[
     * @param nRetrieval
     * @return
     */
-  def rankDocuments(q: Query, nRetrieval: Int = 100): List[String] = {
+  def rankDocuments(q: Query, nRetrieval: Int = 100, intersect: Boolean = true): List[String] = {
     // construct the query vector, simple way
     val qVec = normalize(tfidf(tf(q.content), postings, collection.size))
 
     // get the docSet
     //val docSet = DocumentSearcher(postings, collection).searchDocumentsWithInvertedIndex(q) // pure model
-    val docSet = DocumentSearcher(postings, collection).searchDocumentsWithTFIDFmodel(q, 180)
+    val docSet = DocumentSearcher(postings, collection).searchDocumentsWithTFIDFmodel(q, 180, intersect)
 
     // do the job of vector space model
     docSet.map(d => (collection(d).name, cos(d, qVec))).toList.sortBy(- _._2).map(_._1).take(nRetrieval)

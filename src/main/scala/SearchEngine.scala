@@ -65,7 +65,7 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
     (MAP, result, output.toList)
   }
 
-  def tfidfModel(nRetrieval: Int, intersect: Boolean = false) = {
+  def tfidfModel(nRetrieval: Int, intersect: Boolean = true) = {
     val scores = ListBuffer[Double]()
     val vocabulary = TokenMap.map(_._2._1).toSet
     val model = new TFIDFModel(postings, collection.values.toSet)
@@ -117,7 +117,7 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
     (MAP, result, output.toList)
   }
 
-  def vectorSpaceModel(nRetrieval: Int) = {
+  def vectorSpaceModel(nRetrieval: Int, intersect: Boolean = true) = {
     val ST = new Stater(new StopWatch, Runtime.getRuntime)
     ST.start()
     val VecModel = new VectorSpaceModel(postings, collection)
@@ -128,7 +128,7 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
     for (q <- preprocessedQueries) {
       //val docs = ds.searchDocumentsWithInvertedIndex(q)
       //println("picked num: " + docs.size)
-      val retrive = VecModel.rankDocuments(q)
+      val retrive = VecModel.rankDocuments(q, nRetrieval, intersect)
       output ++= Postprocessor.outputRanking(q, retrive) // output of top documents
       if (relevJudgement.contains(q.id)) {
         val score = Postprocessor.APScore(retrive, relevJudgement(q.id))
@@ -159,7 +159,7 @@ object SearchEngine {
     // Load dictionary, postings, and documents
 
 //    val otherDir = "data/filter-1/"
-    val otherDir = "data/filter-1/"
+    val otherDir = "data/4/"
     val TokenMap = PreProcessor.loadTokenMap(otherDir+ "tokenmap.txt")
     ST.PrintAll()
     val postings = PreProcessor.loadPostings(otherDir + "postings.txt")
@@ -174,13 +174,12 @@ object SearchEngine {
     val se = SearchEngine(TokenMap, postings, docs, relevJudgement, queries)
     ST.PrintAll()
 
-//    val Tuple3(score, _, output) = se.tfidfModel(100)
-    val Tuple3(score, _, output) = se.bm25Model(100, 0.4, 0.5, false)
-//    val Tuple3(score, _, output) = se.languageModel(100, true)
-//    val Tuple3(score, _, output) = se.vectorSpaceModel(100)
-//    val Tuple3(score, _, output) = se.vectorSpaceModel(100)
+//    val Tuple3(score, _, output) = se.tfidfModel(100, true)
+//    val Tuple3(score, _, output) = se.bm25Model(100, 0.4, 0.5, false)
+//    val Tuple3(score, _, output) = se.languageModel(100, false)
+    val Tuple3(score, _, output) = se.vectorSpaceModel(100, true)
     ST.PrintAll()
     println(score)
-    Postprocessor.writeRankingToFile("data/ranking-t-17-union-bm25.run", output) // ranking-[t|l]-[groupid].run
+    Postprocessor.writeRankingToFile("data/ranking-t-17-vector.run", output) // ranking-[t|l]-[groupid].run
   }
 }

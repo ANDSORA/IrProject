@@ -1,6 +1,7 @@
 package models
 
 import scala.collection.mutable
+import models.TFIDFModel
 import collection.mutable.{HashSet, HashMap => MutHashMap}
 import scala.math.log
 import preprocessing.{FeatureDocument, Query}
@@ -70,12 +71,15 @@ case class DocumentSearcher(val postings: MutHashMap[Int, List[Int]], val docs: 
     (q.content.map(termID => atfidf(ATFs.getOrElse(termID, 0.5), postings(termID).length, collectionSize)).sum, d.ID)
   }
 
-  def searchDocumentsWithTFIDFmodel(q: Query, n: Int = 1000, IsTfIdf: Boolean = true): Set[Int] = {
+  def searchDocumentsWithTFIDFmodel(q: Query, n: Int = 1000,
+                                    intersect: Boolean = true): Set[Int] = {
+    /*
     /** Helper function to define ordering
       *
       * @param item
       * @return
       */
+
     def compare(item: Tuple2[Double, Int]) = item._1
 
     val pq = collection.mutable.PriorityQueue[(Double, Int)]()(Ordering.by(compare))
@@ -88,6 +92,10 @@ case class DocumentSearcher(val postings: MutHashMap[Int, List[Int]], val docs: 
       relatedDocuments += pq.dequeue()._2
     }
     relatedDocuments.toSet
+    */
+    val model = new TFIDFModel(postings, docs.values.toSet)
+    val docIndices = searchDocumentsWithInvertedIndex(q, intersect)
+    model.rankDocuments(q, docIndices.map(docs(_)), n).map(_.ID).toSet
   }
 }
 

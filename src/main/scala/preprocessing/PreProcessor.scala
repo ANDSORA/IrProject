@@ -26,7 +26,7 @@ import TermFeature._
 
 object PreProcessor {
 
-  val ExceptionWords: List[String] = List("U.S.", "1988")
+  val ExceptionWords: List[String] = List("U.S.")
   val ReplaceWords: Map[String, List[String]] = Map("presidentialcampaign" -> List("presidential", "campaign"))
 
   /** Add more rules of split
