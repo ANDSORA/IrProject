@@ -68,7 +68,7 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
     (MAP, result, output.toList)
   }
 
-  def tfidfModel(nRetrieval: Int, intersect: Boolean = false) = {
+  def tfidfModel(nRetrieval: Int, intersect: Boolean = true) = {
     val scores = ListBuffer[Double]()
     val vocabulary = TokenMap.map(_._2._1).toSet
     val model = new TFIDFModel(postings, collection.values.toSet)
@@ -124,7 +124,8 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
     (MAP, result, output.toList)
   }
 
-  def vectorSpaceModel(nRetrieval: Int, intersect: Boolean = false) = {
+
+  def vectorSpaceModel(nRetrieval: Int, intersect: Boolean = true) = {
     val ST = new Stater(new StopWatch, Runtime.getRuntime)
     ST.start()
     val VecModel = new VectorSpaceModel(postings, collection)
@@ -188,9 +189,8 @@ object SearchEngine {
 //    val Tuple3(score, _, output) = se.languageModel(100, true)
 //    val Tuple3(score, _, output) = se.vectorSpaceModel(100)
 //    val Tuple3(score, _, output) = se.vectorSpaceModel(100)
-
     ST.PrintAll()
     println(score)
-    Postprocessor.writeRankingToFile("data/ranking-t-17-union-bm25.run", output) // ranking-[t|l]-[groupid].run
+    Postprocessor.writeRankingToFile("data/ranking-t-17-vector.run", output) // ranking-[t|l]-[groupid].run
   }
 }

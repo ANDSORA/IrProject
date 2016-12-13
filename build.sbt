@@ -10,4 +10,8 @@ libraryDependencies  ++= Seq(
 	"org.scalanlp" %% "breeze-viz" % "0.12"
 )
 
+fork := true
+
+javaOptions += "-Xmx4g"
+
 resolvers += "Sonatype Releases" at "https://oss.sonatype.org/content/repositories/releases/"

@@ -42,10 +42,6 @@ class VectorSpaceModel(val postings: HMap[Int, List[Int]], val collection: HMap[
     // construct the query vector, simple way
     val qVec = normalize(tfidf(tf(q.content), postings, collection.size))
 
-    // get the docSet
-    //val docSet = DocumentSearcher(postings, collection).searchDocumentsWithInvertedIndex(q, true) // pure model
-    //val docSet = DocumentSearcher(postings, collection).searchDocumentsWithTFIDFmodel(q, 180)
-
     // do the job of vector space model
     docs.map(d => (collection(d).name, cos(d, qVec))).toList.sortBy(- _._2).map(_._1).take(nRetrieval)
     //docSet.map(docID => collection(docID).name).toList
