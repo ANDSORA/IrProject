@@ -29,7 +29,7 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
     * @param nRetrieval: number of retrieved documents
     * @return
     */
-  def languageModel(nRetrieval: Int) = {
+  def languageModel(nRetrieval: Int, intersect: Boolean = false) = {
     val ST = new Stater(new StopWatch, Runtime.getRuntime)
     // Ranking
     val scores = ListBuffer[Double]()
@@ -45,7 +45,7 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
       mustKeptWords)
     ST.start()
     for (query <- preprocessedQueries) {
-      val docIndices = ds.searchDocumentsWithInvertedIndex(query)
+      val docIndices = ds.searchDocumentsBrutely(query, intersect)//ds.searchDocumentsWithInvertedIndex(query, intersect)
       val docs = docIndices.map(collection(_))
       val retrievedDocuments = model.rankDocuments(query, docs, nRetrieval)
       output ++= Postprocessor.outputRanking(query, retrievedDocuments.map(_.name)) // output of top documents
@@ -65,14 +65,14 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
     (MAP, result, output.toList)
   }
 
-  def tfidfModel(nRetrieval: Int) = {
+  def tfidfModel(nRetrieval: Int, intersect: Boolean = false) = {
     val scores = ListBuffer[Double]()
     val vocabulary = TokenMap.map(_._2._1).toSet
     val model = new TFIDFModel(postings, collection.values.toSet)
     var counter = 1
     val output = ListBuffer[(Int, Int, String)]()
     for (query <- preprocessedQueries) {
-      val docIndices = ds.searchDocumentsBrutely(query, true)//ds.searchDocumentsWithInvertedIndex(query, true)
+      val docIndices = ds.searchDocumentsWithInvertedIndex(query, intersect)
       val docs = docIndices.map(collection(_))
       val retrievedDocuments = model.rankDocuments(query, docs, nRetrieval)
       output ++= Postprocessor.outputRanking(query, retrievedDocuments.map(_.name)) // output of top documents
@@ -91,14 +91,14 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
     (MAP, result, output.toList)
   }
 
-  def bm25Model(nRetrieval: Int, k: Double = 0.4, b: Double = 0.5) = {
+  def bm25Model(nRetrieval: Int, k: Double = 0.4, b: Double = 0.5, intersect: Boolean = false) = {
     val scores = ListBuffer[Double]()
     val vocabulary = TokenMap.map(_._2._1).toSet
     val model = new BM25(postings, collection.values.toSet, k, b)
     var counter = 1
     val output = ListBuffer[(Int, Int, String)]()
     for (query <- preprocessedQueries) {
-      val docIndices = ds.searchDocumentsWithInvertedIndex(query, true)
+      val docIndices = ds.searchDocumentsWithInvertedIndex(query, intersect)
       val docs = docIndices.map(collection(_))
       val retrievedDocuments = model.rankDocuments(query, docs, nRetrieval)
       output ++= Postprocessor.outputRanking(query, retrievedDocuments.map(_.name)) // output of top documents
@@ -174,13 +174,13 @@ object SearchEngine {
     val se = SearchEngine(TokenMap, postings, docs, relevJudgement, queries)
     ST.PrintAll()
 
-    val Tuple3(score, _, output) = se.tfidfModel(100)
-//    val Tuple3(score, _, output) = se.bm25Model(100, 0.4, 0.5)
-//    val Tuple3(score, _, output) = se.languageModel(100)
+//    val Tuple3(score, _, output) = se.tfidfModel(100)
+    val Tuple3(score, _, output) = se.bm25Model(100, 0.4, 0.5, false)
+//    val Tuple3(score, _, output) = se.languageModel(100, true)
 //    val Tuple3(score, _, output) = se.vectorSpaceModel(100)
 //    val Tuple3(score, _, output) = se.vectorSpaceModel(100)
     ST.PrintAll()
     println(score)
-    Postprocessor.writeRankingToFile("data/ranking-t-17-tfidf.run", output) // ranking-[t|l]-[groupid].run
+    Postprocessor.writeRankingToFile("data/ranking-t-17-union-bm25.run", output) // ranking-[t|l]-[groupid].run
   }
 }
