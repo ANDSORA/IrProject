@@ -124,7 +124,7 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
     (MAP, result, output.toList)
   }
 
-  def vectorSpaceModel(nRetrieval: Int) = {
+  def vectorSpaceModel(nRetrieval: Int, intersect: Boolean = false) = {
     val ST = new Stater(new StopWatch, Runtime.getRuntime)
     ST.start()
     val VecModel = new VectorSpaceModel(postings, collection)
@@ -132,19 +132,19 @@ case class SearchEngine(TokenMap: MutHashMap[String, (Int, Int)],
     println("VecModel Construted Completed!")
     val scores = ListBuffer[Double]()
     val output = ListBuffer[(Int, Int, String)]()
-    for (q <- preprocessedQueries) {
-      //val docs = ds.searchDocumentsWithInvertedIndex(q)
+    for (query <- preprocessedQueries) {
+      val docs = ds.searchDocumentsWithInvertedIndex(query, intersect)
       //println("picked num: " + docs.size)
-      val retrive = VecModel.rankDocuments(q)
-      if (relevJudgement.contains(q.id)) {
-        val score = Postprocessor.APScore(retrive, relevJudgement(q.id))
-        println(q.id + ": " + "AP -> " + score + " " + "(P, R, F1) -> " + Postprocessor.f1Score(retrive, relevJudgement(q.id)))
+      val retrive = VecModel.rankDocuments(query, docs, nRetrieval)
+      if (relevJudgement.contains(query.id)) {
+        val score = Postprocessor.APScore(retrive, relevJudgement(query.id))
+        println(query.id + ": " + "AP -> " + score + " " + "(P, R, F1) -> " + Postprocessor.f1Score(retrive, relevJudgement(query.id)))
         //println("The true num is: " + relevJudgement(q.id).size)
         scores += score
       }
       else {
-        output ++= Postprocessor.outputRanking(q, retrive)
-        println(q.id)
+        output ++= Postprocessor.outputRanking(query, retrive)
+        println(query.id)
       }
       //ST.PrintAll()
     }

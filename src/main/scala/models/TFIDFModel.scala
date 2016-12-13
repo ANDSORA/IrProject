@@ -72,7 +72,7 @@ object TFIDFModel {
     ST.PrintAll()
 
     println("Here we run the TFIDF model.")
-    val Tuple3(score, _, output) = se.tfidfModel(100)
+    val Tuple3(score, _, output) = se.tfidfModel(100, true)
 
     ST.PrintAll()
     println(score)
