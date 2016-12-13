@@ -107,7 +107,7 @@ object BM25 {
     ST.PrintAll()
 
     println("Here we run the BM25 model")
-    val Tuple3(score, _, output) = se.bm25Model(100, 0.4, 0.5)
+    val Tuple3(score, _, output) = se.bm25Model(100, 0.4, 0.5, true)
 
     ST.PrintAll()
     println(score)
