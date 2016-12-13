@@ -35,15 +35,28 @@ case class DocumentSearcher(val postings: MutHashMap[Int, List[Int]], val docs: 
   }
   */
 
-  def searchDocumentsWithInvertedIndex(q: Query): Set[Int] = {
-    q.content.map(postings.getOrElse(_, List())).filter(!_.isEmpty).sortBy(_.length)
-      .reduceLeft((a, b) => sortedArrayUnion(a.toArray, b.toArray)).map(a => docs(a).ID).toSet
+  def searchDocumentsWithInvertedIndex(q: Query, intersect: Boolean = false): Set[Int] = {
+    if (!intersect) {
+      q.content.map(postings.getOrElse(_, List())).filter(!_.isEmpty).sortBy(_.length)
+        .reduceLeft((a, b) => sortedArrayUnion(a.toArray, b.toArray)).map(a => docs(a).ID).toSet
+    }
+    else {
+      q.content.map(postings.getOrElse(_, List())).filter(!_.isEmpty).sortBy(_.length)
+        .reduceLeft((a, b) => sortedArrayIntersect(a.toArray, b.toArray)).map(a => docs(a).ID).toSet
+    }
   }
 
-  def searchDocumentsBrutely(q: Query): Set[Int] = {
+  def searchDocumentsBrutely(q: Query, intersect: Boolean = false): Set[Int] = {
     val ss = mutable.Set[Int]()
-    for (doc <- docs.values) {
-      if (q.content.map(a => doc.tf.contains(a)).reduceLeft((a,b) => a || b)) ss += doc.ID
+    if (!intersect) {
+      for (doc <- docs.values) {
+        if (q.content.map(a => doc.tf.contains(a)).reduceLeft((a, b) => a || b)) ss += doc.ID
+      }
+    }
+    else {
+      for (doc <- docs.values) {
+        if (q.content.map(a => doc.tf.contains(a)).reduceLeft((a, b) => a && b)) ss += doc.ID
+      }
     }
     ss.toSet
   }
